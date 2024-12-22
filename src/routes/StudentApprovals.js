@@ -52,7 +52,7 @@ const StudentApprovals = () => {
             <th className="px-4 py-2 text-center">Date of Birth</th>
             <th className="px-4 py-2 text-center">Father Name</th>
             <th className="px-4 py-2 text-center">Mother Name</th>
-            <th className="px-4 py-2 text-center">Hall Ticket Generated</th>
+            <th className="px-4 py-2 text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
