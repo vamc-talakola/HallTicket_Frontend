@@ -32,6 +32,23 @@ const Register = () => {
       }
     }
   };
+  const [educationEntries, setEducationEntries] = useState([]);
+
+  
+
+  const addEducationEntry = () => {
+    setEducationEntries([
+      ...educationEntries,
+      { level: "", schoolName: "", rollNo: "", percentage: "" },
+    ]);
+  };
+
+  const removeEducationEntry = (index) => {
+    const updatedEntries = educationEntries.filter((_, i) => i !== index);
+    setEducationEntries(updatedEntries);
+  };
+
+
 
   const validateForm = () => {
     const newErrors = {};
@@ -43,7 +60,14 @@ const Register = () => {
     if (!formData.gender) newErrors.gender = "Gender is required.";
     if (!formData.category) newErrors.category = "Category is required.";
     if (!formData.maritalStatus) newErrors.maritalStatus = "Marital status is required.";
-
+    educationEntries.forEach((entry, index) => {
+      if (!entry.level) newErrors[`level_${index}`] = "Education level is required.";
+      if (!entry.schoolName)
+        newErrors[`schoolName_${index}`] = "School name is required.";
+      if (!entry.rollNo) newErrors[`rollNo_${index}`] = "Roll number is required.";
+      if (!entry.percentage)
+        newErrors[`percentage_${index}`] = "Percentage is required.";
+    });
     if (!formData.contactInfo.mobileNumber.trim()) {
       newErrors.mobileNumber = "Mobile number is required.";
     } else if (!/^[0-9]{10}$/.test(formData.contactInfo.mobileNumber)) {
@@ -156,17 +180,10 @@ const Register = () => {
     fetchStates();
   }, []);
 
-  const handleEducationChange = (level, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      educationInfo: {
-        ...prev.educationInfo,
-        [level]: {
-          ...prev.educationInfo[level],
-          [field]: value,
-        },
-      },
-    }));
+  const handleEducationChange = (index, field, value) => {
+    const updatedEntries = [...educationEntries];
+    updatedEntries[index][field] = value;
+    setEducationEntries(updatedEntries);
   };
 
   const handleInputChange = (e) => {
@@ -211,7 +228,7 @@ const Register = () => {
   const handleSubmit = async(e) => {
     e.preventDefault();
     console.log("Form Data:", formData);
-    if (validateForm()) {
+    // if (validateForm()) {
       console.log("Form Data:", formData);
       //hit the api
       const response =await fetch(`${BASE_URL}/register`, {
@@ -223,9 +240,9 @@ const Register = () => {
       });
       console.log("Response:", response);
       alert("Registration Successful!");      
-    } else {
-      alert("Please Fill the details correctly");
-    }
+    // } else {
+    //   alert("Please Fill the details correctly");
+    // }
 
   };
 
@@ -416,155 +433,75 @@ const Register = () => {
           {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
         </div>
 
-        <div className="text-left">
-          <h3 className="text-xl font-semibold mb-2">Education Information</h3>
+        <div>
+      <h3 className="text-xl font-semibold mb-4">Education Information</h3>
 
-          {/* High School */}
-          <div className="space-y-2">
-            <h4 className="font-medium">High School</h4>
-            <input
-              type="text"
-              placeholder="School Name"
-              value={formData.educationInfo?.highSchool?.schoolName}
-              onChange={(e) =>
-                handleEducationChange("highSchool", "schoolName", e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-           {errors.highSchool_schoolName && (
-    <p className="text-red-500 text-sm">{errors.highSchool_schoolName}</p>
-  )}
-            <input
-              type="number"
-              placeholder="Roll No"
-              value={formData.educationInfo?.highSchool?.rollNo}
-              onChange={(e) =>
-                handleEducationChange("highSchool", "rollNo", e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.highSchool_rollNo && (
-    <p className="text-red-500 text-sm">{errors.highSchool_rollNo}</p>
-  )}
-
-            <input
-              type="number"
-              placeholder="Percentage"
-              value={formData.educationInfo?.highSchool?.percentage}
-              onChange={(e) =>
-                handleEducationChange("highSchool", "percentage", e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.highSchool_percentage && (
-    <p className="text-red-500 text-sm">{errors.highSchool_percentage}</p>
-  )}
+      {/* Education Entries */}
+      {educationEntries.map((entry, index) => (
+        <div key={index} className="mb-4 p-4 border border-gray-300 rounded-md">
+          <div className="flex justify-between">
+            <h4 className="font-medium">Education {index + 1}</h4>
+            <button
+              onClick={() => removeEducationEntry(index)}
+              className="text-red-500 hover:text-red-700"
+            >
+              Remove
+            </button>
           </div>
-
-          {/* Intermediate */}
-          <div className="space-y-2 mt-4">
-            <h4 className="font-medium">Intermediate</h4>
-            <input
-              type="text"
-              placeholder="School Name"
-              value={formData.educationInfo?.intermediate?.schoolName}
-              onChange={(e) =>
-                handleEducationChange(
-                  "intermediate",
-                  "schoolName",
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.intermediate_schoolName && (
-    <p className="text-red-500 text-sm">{errors.intermediate_schoolName}</p>
-  )}
-            <input
-              type="number"
-              placeholder="Roll No"
-              value={formData.educationInfo?.intermediate?.rollNo}
-              onChange={(e) =>
-                handleEducationChange("intermediate", "rollNo", e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.intermediate_rollNo && (
-              <p className="text-red-500 text-sm">
-               {errors.intermediate_rollNo}
-              </p>
-            )}
-            <input
-              type="number"
-              placeholder="Percentage"
-              value={formData.educationInfo?.intermediate?.percentage}
-              onChange={(e) =>
-                handleEducationChange(
-                  "intermediate",
-                  "percentage",
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.intermediate_percentage && (
-              <p className="text-red-500 text-sm">
-               {errors.intermediate_percentage}
-              </p>
-            )}
-          </div>
-
-          {/* Graduation */}
-          <div className="space-y-2 mt-4">
-            <h4 className="font-medium">Graduation</h4>
-            <input
-              type="text"
-              placeholder="School Name"
-              value={formData.educationInfo?.graduation?.schoolName}
-              onChange={(e) =>
-                handleEducationChange("graduation", "schoolName", e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.graduation_schoolName && (
-              <p className="text-red-500 text-sm">
-               {errors.graduation_schoolName}
-              </p>
-            )}
-            <input
-              type="number"
-              placeholder="Roll No"
-              value={formData.educationInfo?.graduation?.rollNo}
-              onChange={(e) =>
-                handleEducationChange("graduation", "rollNo", e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.graduation_rollNo && (
-              <p className="text-red-500 text-sm">
-                {errors.graduation_rollNo}
-              </p>
-            )}
-            <input
-              type="number"
-              placeholder="Percentage"
-              value={formData.educationInfo?.graduation?.percentage}
-              onChange={(e) =>
-                handleEducationChange(
-                  "graduation",
-                  "percentage",
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.graduation_percentage && (
-              <p className="text-red-500 text-sm">
-               {errors.graduation_percentage}
-              </p>
-            )}
-          </div>
+          <input
+            type="text"
+            placeholder="Education Level (e.g., 10th, Graduation)"
+            value={entry.level}
+            onChange={(e) => handleEducationChange(index, "level", e.target.value)}
+            className="w-full px-4 py-2 mb-2 border border-gray-300 rounded-md"
+          />
+          {errors[`level_${index}`] && (
+            <p className="text-red-500 text-sm">{errors[`level_${index}`]}</p>
+          )}
+          <input
+            type="text"
+            placeholder="School Name"
+            value={entry.schoolName}
+            onChange={(e) =>
+              handleEducationChange(index, "schoolName", e.target.value)
+            }
+            className="w-full px-4 py-2 mb-2 border border-gray-300 rounded-md"
+          />
+          {errors[`schoolName_${index}`] && (
+            <p className="text-red-500 text-sm">{errors[`schoolName_${index}`]}</p>
+          )}
+          <input
+            type="text"
+            placeholder="Roll Number"
+            value={entry.rollNo}
+            onChange={(e) => handleEducationChange(index, "rollNo", e.target.value)}
+            className="w-full px-4 py-2 mb-2 border border-gray-300 rounded-md"
+          />
+          {errors[`rollNo_${index}`] && (
+            <p className="text-red-500 text-sm">{errors[`rollNo_${index}`]}</p>
+          )}
+          <input
+            type="text"
+            placeholder="Percentage"
+            value={entry.percentage}
+            onChange={(e) =>
+              handleEducationChange(index, "percentage", e.target.value)
+            }
+            className="w-full px-4 py-2 mb-2 border border-gray-300 rounded-md"
+          />
+          {errors[`percentage_${index}`] && (
+            <p className="text-red-500 text-sm">{errors[`percentage_${index}`]}</p>
+          )}
         </div>
+      ))}
+
+      <button
+        onClick={addEducationEntry}
+        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+      >
+        + Add Education
+      </button>
+    </div>
 
         {/* State */}
         <div className="text-left">
