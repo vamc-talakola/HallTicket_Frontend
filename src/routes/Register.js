@@ -134,23 +134,25 @@ const Register = () => {
     signature: null,
     password: "",
   });
+  const API_KEY = "VmlmdTFKazFiaFRQZGIyTmdPcUtYTGZkdFpVQUFhUVM0U2R5T3IwVQ==";
 
   useEffect(() => {
-    // Fetch states in India
     const fetchStates = async () => {
       try {
-        const response = await axios.post(
-          "https://countriesnow.space/api/v0.1/countries/states",
+        const response = await axios.get(
+          "https://api.countrystatecity.in/v1/countries/IN/states",
           {
-            country: "India",
+            headers: {
+              "X-CSCAPI-KEY": "VmlmdTFKazFiaFRQZGIyTmdPcUtYTGZkdFpVQUFhUVM0U2R5T3IwVQ==",
+            },
           }
         );
-        setStates(response.data.data.states);
+        setStates(response.data);
       } catch (error) {
         console.error("Error fetching states:", error);
       }
     };
-
+  
     fetchStates();
   }, []);
 
