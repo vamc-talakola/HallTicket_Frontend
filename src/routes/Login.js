@@ -28,12 +28,18 @@ const Login = () => {
             'Content-Type': 'application/json'
           }
         })
-        console.log(response)
-        if (response.status === 200) {
-          userStore.setRole("student")
-          // Redirect to dashboard
+        
+        if (response.ok) {
+          const data = await response.json()
           alert("Login Successfull")
+          localStorage.setItem('token', data.token); // Save token to local storage
+      localStorage.setItem('candidate', JSON.stringify(data.candidate)); // Save candidate data to local storage
+      userStore.setRole("student")
+      userStore.setId(data.candidate._id);
           navigate('/')
+         
+          // Redirect to dashboard
+        
         } else {
           setError('Invalid credentials')
         }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { storage, ref, uploadBytes, getDownloadURL } from "../Firebase";
 import BASE_URL from "../config";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [states, setStates] = useState([]);
@@ -12,6 +13,7 @@ const Register = () => {
   const [signatureUrl, setSignatureUrl] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const handlePhotoChange = async (event) => {
     const file = event.target.files[0]; // Get the selected file
@@ -239,7 +241,8 @@ const Register = () => {
         },
       });
       console.log("Response:", response);
-      alert("Registration Successful!");      
+      alert("Registration Successful!");
+      navigate("/login");      
     // } else {
     //   alert("Please Fill the details correctly");
     // }
@@ -442,6 +445,7 @@ const Register = () => {
           <div className="flex justify-between">
             <h4 className="font-medium">Education {index + 1}</h4>
             <button
+              type="button"
               onClick={() => removeEducationEntry(index)}
               className="text-red-500 hover:text-red-700"
             >
@@ -496,6 +500,7 @@ const Register = () => {
       ))}
 
       <button
+        type="button"
         onClick={addEducationEntry}
         className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
       >

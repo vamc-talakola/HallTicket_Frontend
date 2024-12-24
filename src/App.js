@@ -9,6 +9,7 @@ import Login from './routes/Login';
 import userStore from "./store/userStore";
 import { Provider } from 'mobx-react';
 import StudentApprovals from './routes/StudentApprovals';
+import GenerateHallticket from './routes/GenerateHallticket';
 
 function App() {
   return (
@@ -21,6 +22,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/studentApprovals" element={<StudentApprovals/>} />
+        <Route path="/generate-hallticket" element={<GenerateHallticket/>} />
+
       </Routes>
     </Router>
     </div>

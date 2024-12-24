@@ -3,6 +3,23 @@ import BASE_URL from '../config'
 
 const StudentApprovals = () => {
     const [approvalStudents, setApprovalStudents] = useState([])
+    const handleApprove = async (id) => {
+      try{
+        const status=true;
+        const response=await fetch(`${BASE_URL}/candidate/${id}/status`,{
+          method:'PUT',
+          body:JSON.stringify({status:true}),
+          headers:{
+            'Content-Type':'application/json'
+          }
+        })
+        console.log(response)
+      }
+      catch(error){
+        console.error('Error approving student:', error);
+      }
+    }
+
     useEffect(() => {
         const getCandidates = async () => {
           try {
@@ -23,7 +40,7 @@ const StudentApprovals = () => {
             // Ensure data exists and is an array before applying filter
             if (data?.data) {
               const filteredStudents = data?.data.filter(
-                (student) => !student.hasOwnProperty('status')
+                (student) => student.status === 'pending'
               );
               setApprovalStudents(filteredStudents);
             } else {
@@ -69,6 +86,7 @@ const StudentApprovals = () => {
                 <button
                 //   onClick={() => handleApprove(student._id)}
                   className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 mr-2"
+                  onClick={()=>handleApprove(student._id)}
                 >
                   Approve
                 </button>
