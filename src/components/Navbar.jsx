@@ -26,7 +26,7 @@ const handleStudentLogout=()=>{
             <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/')}>Home</li>
             <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/Login', { state: { name: "invigilator" } })}>Invigilator</li>
             <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/Login', { state: { name: "controller" } })}>Controller of Examination</li>
-            <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/Login', { state: { name: "student" } })}>Students</li>
+            <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/Login', { state: { name: "student" } })}>Candidates</li>
           </ul>
           <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
             Join Now →
