@@ -3,16 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
     "axios": "^1.7.9",
     "cra-template": "1.2.0",
     "firebase": "^11.1.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
     "mobx": "^6.13.5",
     "mobx-react": "^9.2.0",
+    "qr-scanner": "^1.4.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "react-qr-scanner": "^1.0.0-alpha.11",
     "react-razorpay": "^3.0.1",
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",
+    "react-to-print": "^2.14.15",
     "web-vitals": "^4.2.4"
   },
   "scripts": {

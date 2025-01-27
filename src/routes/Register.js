@@ -4,6 +4,16 @@ import { storage, ref, uploadBytes, getDownloadURL } from "../Firebase";
 import BASE_URL from "../config";
 import { Navigate, useNavigate } from "react-router-dom";
 
+{/* 
+  1.declartion (checkbox)
+  2.captcha
+  3.in education details stream,date of passing,
+  subcaste field
+  disability if yes show a dropdown with values as in screenshot
+  nationality :indian
+  idproof with options as in the screenshot
+  textbox with id proof number
+*/}
 const Register = () => {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -14,7 +24,8 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-
+const [otp, seOtp] = useState("");
+const [isOtpSent, setIsOtpSent] = useState(false);
   const handlePhotoChange = async (event) => {
     const file = event.target.files[0]; // Get the selected file
     if (file) {
@@ -39,69 +50,46 @@ const Register = () => {
   
 
   const addEducationEntry = () => {
-    setEducationEntries([
-      ...educationEntries,
-      { level: "", schoolName: "", rollNo: "", percentage: "" },
-    ]);
+    setEducationEntries((prev) => [...prev, { level: "", schoolName: "", rollNo: "", percentage: "" }]);
   };
 
   const removeEducationEntry = (index) => {
-    const updatedEntries = educationEntries.filter((_, i) => i !== index);
-    setEducationEntries(updatedEntries);
+    setEducationEntries((prev) => prev.filter((_, i) => i !== index));
+    setErrors((prev) => {
+      const updatedErrors = { ...prev };
+      delete updatedErrors[`level_${index}`];
+      delete updatedErrors[`schoolName_${index}`];
+      delete updatedErrors[`rollNo_${index}`];
+      delete updatedErrors[`percentage_${index}`];
+      return updatedErrors;
+    });
   };
-
 
 
   const validateForm = () => {
     const newErrors = {};
+    if (!formData.name) newErrors.name = "Name is required";
+    if (formData.name !== formData.confirmName) newErrors.confirmName = "Names do not match";
+    if (!formData.fatherName) newErrors.fatherName = "Father's name is required";
+    if (formData.fatherName !== formData.confirmFatherName)
+      newErrors.confirmFatherName = "Father's names do not match";
+    if (!formData.motherName) newErrors.motherName = "Mother's name is required";
+    if (formData.motherName !== formData.confirmMotherName)
+      newErrors.confirmMotherName = "Mother's names do not match";
+    if (!formData.dob) newErrors.dob = "Date of birth is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.maritalStatus) newErrors.maritalStatus = "Marital status is required";
+    if (!formData.contactInfo.mobileNumber) newErrors.mobileNumber = "Mobile number is required";
+    if (!formData.contactInfo.email) newErrors.email = "Email is required";
+    if (!selectedState) newErrors.state = "State is required";
 
-    if (!formData.name.trim()) newErrors.name = "Name is required.";
-    if (!formData.fatherName.trim()) newErrors.fatherName = "Father's name is required.";
-    if (!formData.motherName.trim()) newErrors.motherName = "Mother's name is required.";
-    if (!formData.dob) newErrors.dob = "Date of birth is required.";
-    if (!formData.gender) newErrors.gender = "Gender is required.";
-    if (!formData.category) newErrors.category = "Category is required.";
-    if (!formData.maritalStatus) newErrors.maritalStatus = "Marital status is required.";
     educationEntries.forEach((entry, index) => {
-      if (!entry.level) newErrors[`level_${index}`] = "Education level is required.";
-      if (!entry.schoolName)
-        newErrors[`schoolName_${index}`] = "School name is required.";
-      if (!entry.rollNo) newErrors[`rollNo_${index}`] = "Roll number is required.";
-      if (!entry.percentage)
-        newErrors[`percentage_${index}`] = "Percentage is required.";
+      if (!entry.level) newErrors[`level_${index}`] = "Education level is required";
+      if (!entry.schoolName) newErrors[`schoolName_${index}`] = "School name is required";
+      if (!entry.rollNo) newErrors[`rollNo_${index}`] = "Roll number is required";
+      if (!entry.percentage) newErrors[`percentage_${index}`] = "Percentage is required";
     });
-    if (!formData.contactInfo.mobileNumber.trim()) {
-      newErrors.mobileNumber = "Mobile number is required.";
-    } else if (!/^[0-9]{10}$/.test(formData.contactInfo.mobileNumber)) {
-      newErrors.mobileNumber = "Mobile number must be 10 digits.";
-    }
-
-    if (!formData.contactInfo.email.trim()) {
-      newErrors.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactInfo.email)) {
-      newErrors.email = "Invalid email address.";
-    }
-
-    const educationFields = ["schoolName", "rollNo", "percentage"];
-    Object.keys(formData.educationInfo).forEach((level) => {
-      educationFields.forEach((field) => {
-        if (!formData.educationInfo[level][field]) {
-          newErrors[`${level}_${field}`] = `${field} is required for ${level}.`;
-        }
-      });
-    });
-
-    if (!selectedState) newErrors.state = "State is required.";
-    if (preferences.length < 3) newErrors.cities = "Please select 3 city preferences.";
-
-    if (!formData.photo) newErrors.photo = "Photo is required.";
-    if (!formData.signature) newErrors.signature = "Signature is required.";
-    if (!formData.password) newErrors.password = "Password is required.";
-    if (!confirmPassword) newErrors.confirmPassword = "Confirm your password.";
-
-    if (formData.password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match.";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -125,8 +113,11 @@ const Register = () => {
 
   const [formData, setFormData] = useState({
     name: "",
+    confirmName: "",
     fatherName: "",
+    confirmFatherName: "",
     motherName: "",
+    confirmMotherName: "",
     dob: "",
     gender: "",
     category: "",
@@ -186,20 +177,24 @@ const Register = () => {
     const updatedEntries = [...educationEntries];
     updatedEntries[index][field] = value;
     setEducationEntries(updatedEntries);
+    setErrors((prev) => ({
+      ...prev,
+      [`${field}_${index}`]: "",
+    }));
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Remove error for the field immediately
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   };
-
-  // const handlePhotoChange = (e) => {
-  //   setFormData((prev) => ({ ...prev, photo: e.target.files[0] }));
-  // };
-
-  // const handleSignatureChange = (e) => {
-  //   setFormData((prev) => ({ ...prev, signature: e.target.files[0] }));
-  // };
 
   const handleCityPreference = (city) => {
     if (preferences.length < 3) {
@@ -227,27 +222,52 @@ const Register = () => {
     setCities((prev) => [...prev, city]); // Add the city back to the dropdown
   };
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form Data:", formData);
-    // if (validateForm()) {
-      console.log("Form Data:", formData);
-      //hit the api
-      const response =await fetch(`${BASE_URL}/register`, {
+  
+    // Call the form validation method
+    if (!validateForm()) {
+      alert("Please fix the validation errors before submitting.");
+      return;
+    }
+  
+    try {
+      // Send the registration request
+      const response = await fetch(`${BASE_URL}/register`, {
         method: "POST",
         body: JSON.stringify(formData),
         headers: {
           "Content-Type": "application/json",
         },
       });
-      console.log("Response:", response);
-      alert("Registration Successful!");
-      navigate("/login");      
-    // } else {
-    //   alert("Please Fill the details correctly");
-    // }
-
+  
+      // Check if the response is successful
+      if (response.ok) {
+        console.log("Response:", response);
+        alert("Registration Successful!");
+        navigate("/login");
+      } else {
+        // Handle non-200 HTTP status codes
+        const errorData = await response.json();
+        alert(`Registration failed: ${errorData.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      // Handle network errors
+      console.error("Error during registration:", error);
+      alert("An error occurred. Please try again later.");
+    }
   };
+  
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   if (validateForm()) {
+  //     alert("Form submitted successfully!");
+  //     console.log("Form data:", formData);
+  //   } else {
+  //     alert("Please fix the validation errors before submitting.");
+  //   }
+  // };
 
   const handleStateChange = (e) => {
     const stateName = e.target.value;
@@ -257,6 +277,10 @@ const Register = () => {
     setFormData((prev) => ({
       ...prev,
       examPreferences: { state: stateName, cities: [] },
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      state: "",
     }));
   };
 
@@ -278,10 +302,11 @@ const Register = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      contactInfo: {
-        ...prev.contactInfo,
-        [name]: value, // Update mobileNumber
-      },
+      contactInfo: { ...prev.contactInfo, [name]: value },
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
     }));
   };
 
@@ -289,12 +314,51 @@ const Register = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      contactInfo: {
-        ...prev.contactInfo,
-        [name]: value, // Update email
-      },
+      contactInfo: { ...prev.contactInfo, [name]: value },
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
     }));
   };
+
+  const sendotp = async () => {
+    try{
+      const response = await axios.post(
+        `${BASE_URL}/send-otp`,
+        {
+          email: formData.contactInfo.email,
+        }
+      )
+      if(response.status === 200){
+        console.log("OTP sent successfully");
+        setIsOtpSent(true);
+        alert("OTP sent successfully");
+    }
+  }
+    catch (error) {
+      console.error("Error sending otp:", error);
+    }
+  }
+  const verifyotp = async () => {
+    try{
+      const response = await axios.post(
+        `${BASE_URL}/verify-otp`,
+        {
+          email: formData.contactInfo.email,
+          otp: otp,
+        }
+      )
+      if(response.status === 200){
+        console.log("OTP verified successfully");
+        setIsOtpSent(true);
+        alert("OTP sent successfully");
+    }
+  }
+    catch (error) {
+      console.error("Error sending otp:", error);
+    }
+  }
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">
@@ -314,7 +378,17 @@ const Register = () => {
           />
           {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
         </div>
-
+        <div className="text-left">
+      <input
+        type="text"
+        name="confirmName"
+        placeholder="Confirm Name"
+        value={formData.confirmName}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+      />
+      {errors.confirmName && <p className="text-red-500 text-sm">{errors.confirmName}</p>}
+    </div>
         {/* Father Name */}
         <div className="text-left">
           <input
@@ -327,6 +401,17 @@ const Register = () => {
           />
           {errors.fatherName && <p className="text-red-500 text-sm">{errors.fatherName}</p>}
         </div>
+        <div className="text-left">
+      <input
+        type="text"
+        name="confirmFatherName"
+        placeholder="Confirm Father's Name"
+        value={formData.confirmFatherName}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+      />
+      {errors.confirmFatherName && <p className="text-red-500 text-sm">{errors.confirmFatherName}</p>}
+    </div>
 
         {/* Mother Name */}
         <div className="text-left">
@@ -340,6 +425,17 @@ const Register = () => {
           />
           {errors.motherName && <p className="text-red-500 text-sm">{errors.motherName}</p>}
         </div>
+        <div className="text-left">
+      <input
+        type="text"
+        name="confirmMotherName"
+        placeholder="Confirm Mother's Name"
+        value={formData.confirmMotherName}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+      />
+      {errors.confirmMotherName && <p className="text-red-500 text-sm">{errors.confirmMotherName}</p>}
+    </div>
 
         {/* Date of Birth */}
         <div className="text-left">
@@ -403,16 +499,7 @@ const Register = () => {
           {errors.maritalStatus && <p className="text-red-500 text-sm">{errors.maritalStatus}</p>}
         </div>
 
-        {/* Contact Info */}
-        {/* <div className="text-left">">
-          <textarea
-            name="contactInfo"
-            placeholder="Contact Information"
-            value={formData.contactInfo}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-          />
-        </div> */}
+       
         <div className="text-left">
           <input
             type="text"
@@ -424,17 +511,61 @@ const Register = () => {
           />
           {errors.mobileNumber && <p className="text-red-500 text-sm">{errors.mobileNumber}</p>}
         </div>
-        <div className="text-left">
-          <input
-            type="text"
-            name="email"
-            placeholder="Email"
-            value={formData.contactInfo.email} // Access the nested field
-            onChange={handleEmialChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-          />
-          {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-        </div>
+
+
+
+
+        <div className="flex space-x-4 items-start">
+  {/* Email Input */}
+  <div className="text-left flex-1">
+    <input
+      type="text"
+      name="email"
+      placeholder="Email"
+      value={formData.contactInfo.email}
+      onChange={handleEmialChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+    />
+    {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+  </div>
+
+  {/* OTP Input */}
+  <div className="text-left flex-1">
+    <input
+      type="text"
+      name="otp"
+      placeholder="OTP"
+      onChange={(e)=>seOtp(e.target.value)}
+      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+    />
+    {errors.otp && <p className="text-red-500 text-sm">{errors.otp}</p>}
+  </div>
+</div>
+<div className="flex space-x-4 items-start">
+  {/* send otp button */}
+  <div className="text-left flex-1">
+    <button
+      type="button"
+      onClick={sendotp}
+      className="w-full px-4 py-2 bg-blue-500 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+    >send otp</button>
+  </div>
+
+  {/* verify otp button */}
+  <div className="text-left flex-1">
+    <button
+      type="button"
+      onClick={verifyotp}
+      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+    >verify otp</button>
+  </div>
+</div>
+
+
+
+
+
+
 
         <div>
       <h3 className="text-xl font-semibold mb-4">Education Information</h3>

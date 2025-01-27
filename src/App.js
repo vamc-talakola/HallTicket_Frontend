@@ -10,6 +10,10 @@ import userStore from "./store/userStore";
 import { Provider } from 'mobx-react';
 import StudentApprovals from './routes/StudentApprovals';
 import GenerateHallticket from './routes/GenerateHallticket';
+import StudentsDetails from './routes/StudentsDetails';
+import HallTicketRequests from './routes/HallTicketRequests';
+import DownloadHall from './routes/DownloadHall';
+import VerifyHallTicket from './routes/VerifyHallTicket';
 
 function App() {
   return (
@@ -23,7 +27,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/studentApprovals" element={<StudentApprovals/>} />
         <Route path="/generate-hallticket" element={<GenerateHallticket/>} />
-
+        <Route path="/studentDetails" element={<StudentsDetails/>} />
+        <Route path="/hallticket-requests" element={<HallTicketRequests/>} />
+        <Route path="/download" element={<DownloadHall/>} />
+        <Route path="/verify" element={<VerifyHallTicket/>} />
       </Routes>
     </Router>
     </div>

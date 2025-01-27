@@ -1,10 +1,14 @@
 import { makeAutoObservable } from "mobx";
 class UserStore {
-    role = localStorage.getItem("role") || "";
-    id="";
+  
     constructor() {
         makeAutoObservable(this);
     }
+    
+    role = localStorage.getItem("role") || "";
+    id="";
+    paymentDone=false;
+    hallTicketRequested=false;
     setRole(role) {
         this.role = role;
         localStorage.setItem("role", role);  
@@ -13,9 +17,16 @@ class UserStore {
         this.id=id;
         localStorage.setItem("id",id);
     }
+    setPaymentDone=(paymentDone)=>{
+        this.paymentDone=paymentDone;
+        console.log(paymentDone);
+    }
+    setHallTicketRequested(hallTicketRequested){
+        this.hallTicketRequested=hallTicketRequested;
+    }
+
     
 }
 
 
-const  userStore=new UserStore();
-export default userStore;
+export default UserStore;

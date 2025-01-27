@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import BASE_URL from '../config'
 import {  useLocation, useNavigate } from 'react-router-dom'
-import userStore from '../store/userStore'
+import { useStores } from '../store'
 
 
 const Login = () => {
@@ -12,7 +12,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const location = useLocation();
   const navigate = useNavigate(); 
+const {UserStore} =useStores();
+
   const name = location.state?.name;
+  console.log(name)
   const handleSubmit = async () => {
     if(name=="student"){
       try {
@@ -34,8 +37,8 @@ const Login = () => {
           alert("Login Successfull")
           localStorage.setItem('token', data.token); // Save token to local storage
       localStorage.setItem('candidate', JSON.stringify(data.candidate)); // Save candidate data to local storage
-      userStore.setRole("student")
-      userStore.setId(data.candidate._id);
+      UserStore.setRole("student")
+      UserStore.setId(data.candidate._id);
           navigate('/')
          
           // Redirect to dashboard
@@ -63,10 +66,17 @@ const Login = () => {
           }
         })
         console.log(response)
-        if (response.status === 200) {
-          userStore.setRole(name)
-          // Redirect to dashboard
+        if (response.ok) {
+          const data = await response.json()
           alert("Login Successfull")
+         
+          localStorage.setItem('token', data.token); // Save token to local storage
+         
+          localStorage.setItem("role", name); // Save candidate data to local storage
+          UserStore.setRole(name)
+          //save id to local storage
+          UserStore.setId(data.user._id);
+          console.log(data.user._id)
           navigate('/')
         } else {
           setError('Invalid credentials')
