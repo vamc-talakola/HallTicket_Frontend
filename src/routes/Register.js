@@ -3,9 +3,11 @@ import axios from "axios";
 import { storage, ref, uploadBytes, getDownloadURL } from "../Firebase";
 import BASE_URL from "../config";
 import { Navigate, useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
+
 
 {/* 
-  1.declartion (checkbox)
+  1.declartion (checkbox) done
   2.captcha
   3.in education details stream,date of passing,
   subcaste field
@@ -17,6 +19,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 const Register = () => {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [isDeclarationChecked,setIsDeclarationChecked] = useState(false);
   const [selectedState, setSelectedState] = useState("");
   const [preferences, setPreferences] = useState([]);
   const [imageUrl, setImageUrl] = useState("");
@@ -24,8 +27,10 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const [verified,setVerified]=useState(false);
 const [otp, seOtp] = useState("");
 const [isOtpSent, setIsOtpSent] = useState(false);
+const [captchaValue, setCaptchaValue] = useState(null);
   const handlePhotoChange = async (event) => {
     const file = event.target.files[0]; // Get the selected file
     if (file) {
@@ -83,7 +88,7 @@ const [isOtpSent, setIsOtpSent] = useState(false);
     if (!formData.contactInfo.mobileNumber) newErrors.mobileNumber = "Mobile number is required";
     if (!formData.contactInfo.email) newErrors.email = "Email is required";
     if (!selectedState) newErrors.state = "State is required";
-
+    if (!isDeclarationChecked) newErrors.declaration = "Please accept the declaration";
     educationEntries.forEach((entry, index) => {
       if (!entry.level) newErrors[`level_${index}`] = "Education level is required";
       if (!entry.schoolName) newErrors[`schoolName_${index}`] = "School name is required";
@@ -352,6 +357,7 @@ const [isOtpSent, setIsOtpSent] = useState(false);
       if(response.status === 200){
         console.log("OTP verified successfully");
         setIsOtpSent(true);
+        setVerified(true);
         alert("OTP sent successfully");
     }
   }
@@ -360,12 +366,12 @@ const [isOtpSent, setIsOtpSent] = useState(false);
     }
   }
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <div className=" mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">
         Registration Form
       </h2>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4 w-[90%] mx-auto" onSubmit={handleSubmit}>
         {/* Name */}
         <div className="text-left">
           <input
@@ -474,11 +480,11 @@ const [isOtpSent, setIsOtpSent] = useState(false);
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
           >
             <option value="">Select Category</option>
+            <option value="General">General</option>
+            <option value="EWS">EWS</option>
+            <option value="OBC">OBC</option>
             <option value="SC">SC</option>
             <option value="ST">ST</option>
-            <option value="BC">BC</option>
-            <option value="EBC">EBC</option>
-            <option value="ENS">ENS</option>
 
           </select>
           {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
@@ -547,6 +553,7 @@ const [isOtpSent, setIsOtpSent] = useState(false);
     <button
       type="button"
       onClick={sendotp}
+      disabled={verified}
       className="w-full px-4 py-2 bg-blue-500 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
     >send otp</button>
   </div>
@@ -556,6 +563,7 @@ const [isOtpSent, setIsOtpSent] = useState(false);
     <button
       type="button"
       onClick={verifyotp}
+      disabled={verified}
       className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
     >verify otp</button>
   </div>
@@ -754,7 +762,26 @@ const [isOtpSent, setIsOtpSent] = useState(false);
           />
           {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
         </div>
+        <div className="mt-4 flex items-start">
+    <input
+      type="checkbox"
+      id="declaration"
+      checked={isDeclarationChecked}
+      onChange={(e) => setIsDeclarationChecked(e.target.checked)}
+      className="w-4 h-4 mt-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+    />
+    <label htmlFor="declaration" className="ml-2 text-sm text-gray-700">
+      I hereby declare that i have gone throught the eligibility criteria for the post and that i meet the requisite eligiblity conditions. I understand that in case any information submitted by me is incorrect or concealed, I shall be liable for immediate disqualification or any other action as per extant rules . I also declare that I have never been dismissed from any Government service. 
+    </label>
+  </div>
 
+ <div className="mb-4">
+        <ReCAPTCHA
+          sitekey="6LdCL9AqAAAAAM-jR5DyxHhUzdt2x4jVX1YMwbz2" // Replace with your reCAPTCHA site key
+          onChange={(value) => setCaptchaValue(value)}
+        />
+        {errors.captcha && <p className="text-red-500 text-sm">{errors.captcha}</p>}
+      </div>
         <div className="text-center">
           <button
             type="submit"
