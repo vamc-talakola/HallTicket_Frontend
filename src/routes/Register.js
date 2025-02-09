@@ -156,7 +156,7 @@ const Register = () => {
     gender: "",
     category: "",
     sub_caste: "",
-    disability: "",
+    disabilityType: "",
     nationality: "Indian",
     idProof: "",
     maritalStatus: "",
