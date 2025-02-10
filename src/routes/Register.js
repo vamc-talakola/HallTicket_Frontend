@@ -25,6 +25,7 @@ const Register = () => {
   const [preferences, setPreferences] = useState([]);
   const [imageUrl, setImageUrl] = useState("");
   const [signatureUrl, setSignatureUrl] = useState("");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
@@ -105,13 +106,27 @@ const Register = () => {
       !formData.sub_caste
     )
       newErrors.subcaste = "Subcaste is required";
-
+    if(!formData.disability) newErrors.disability = "Disability is required";
+    if (formData.disability === "Yes" && !formData.disabilityType)
+      newErrors.disabilityType = "Disability type is required";
+    if (!formData.idProof) newErrors.idProof = "ID proof is required";
+    if (formData.idProof && !formData.idProofNumber)
+      newErrors.idProofNumber = "ID proof number is required";
+    if(!formData.pincode) newErrors.pincode = "Pincode is required";
     if (!formData.maritalStatus)
       newErrors.maritalStatus = "Marital status is required";
     if (!formData.contactInfo.mobileNumber)
       newErrors.mobileNumber = "Mobile number is required";
     if (!formData.contactInfo.email) newErrors.email = "Email is required";
     if (!selectedState) newErrors.state = "State is required";
+    //erors for photo and signature
+    if (!imageUrl) newErrors.photo = "Please upload a photo";
+    if (!signatureUrl) newErrors.signature = "Please upload a signature";
+    if(!captchaValue) newErrors.captcha = "Please complete the captcha";
+    if(formData.password === "") newErrors.password = "Password is required";
+    //chck for declaration
+    if (!isDeclarationChecked) newErrors.declaration = "Please accept the declaration";
+    if(formData.password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
     if (!isDeclarationChecked)
       newErrors.declaration = "Please accept the declaration";
     educationEntries.forEach((entry, index) => {
@@ -156,6 +171,7 @@ const Register = () => {
     gender: "",
     category: "",
     sub_caste: "",
+    disability: "",
     disabilityType: "",
     nationality: "Indian",
     idProof: "",
@@ -278,6 +294,12 @@ const Register = () => {
     e.preventDefault();
     console.log("Form Data:", formData);
 
+    //if formData.disability is No , then remove the disabilityType field in formData
+    if (formData.disability === "No") {
+      const { disabilityType, ...rest } = formData;
+      setFormData(rest);
+    }
+
     // Call the form validation method
     if (!validateForm()) {
       alert("Please fix the validation errors before submitting.");
@@ -298,11 +320,14 @@ const Register = () => {
       if (response.ok) {
         console.log("Response:", response);
         alert("Registration Successful!");
-        navigate("/login");
+        navigate("/Login",{ state: { name: "student" }});
       } else {
         // Handle non-200 HTTP status codes
         const errorData = await response.json();
-        alert(`Registration failed: ${errorData.message || "Unknown error"}`);
+        setVerified(false)
+        seOtp("")
+        alert(`Registration failed: ${errorData.error || "Unknown error"}`);
+        
       }
     } catch (error) {
       // Handle network errors
@@ -398,7 +423,7 @@ const Register = () => {
         console.log("OTP verified successfully");
         setIsOtpSent(true);
         setVerified(true);
-        alert("OTP sent successfully");
+        alert("OTP verified successfully");
       }
     } catch (error) {
       console.error("Error sending otp:", error);
@@ -566,6 +591,7 @@ const Register = () => {
             value={formData.disability}
             onChange={handleInputChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+            <option value="">Select Disability</option>
             <option value="No">No</option>
             <option value="Yes">Yes</option>
           </select>
@@ -620,10 +646,10 @@ const Register = () => {
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
             <option value="">Select ID Proof</option>
             <option value="Aadhar">Aadhar Card</option>
-            <option value="PAN">PAN Card</option>
+            <option value="Pan">PAN Card</option>
             <option value="Driving License">Driving License</option>
             <option value="Passport">Passport</option>
-            <option value="Voter ID">Voter ID</option>
+            <option value="Voter">Voter ID</option>
           </select>
           {errors.idProof && (
             <p className="text-red-500 text-sm">{errors.idProof}</p>
@@ -658,7 +684,7 @@ const Register = () => {
             onChange={handleInputChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
             <option value="">Select Marital Status</option>
-            <option value="Single">Single</option>
+            <option value="UnMarried">UnMarried</option>
             <option value="Married">Married</option>
             <option value="Divorced">Divorced</option>
             <option value="Widow">Widow</option>
@@ -757,6 +783,7 @@ const Register = () => {
             <input
               type="text"
               name="email"
+              disabled={verified}
               placeholder="Email"
               value={formData.contactInfo.email}
               onChange={handleEmialChange}
@@ -772,6 +799,7 @@ const Register = () => {
             <input
               type="text"
               name="otp"
+              disabled={verified}
               placeholder="OTP"
               onChange={(e) => seOtp(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
@@ -989,7 +1017,7 @@ const Register = () => {
             type="password"
             name="password"
             placeholder="Password"
-            value={formData?.password}
+            value={formData.password}
             onChange={handleInputChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
           />
@@ -1027,6 +1055,9 @@ const Register = () => {
             any other action as per extant rules . I also declare that I have
             never been dismissed from any Government service.
           </label>
+          {errors.captcha && (
+            <p className="text-red-500 text-sm">{errors.declaration}</p>
+          )}
         </div>
 
         <div className="mb-4">
