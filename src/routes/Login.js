@@ -44,7 +44,7 @@ const {UserStore} =useStores();
           // Redirect to dashboard
         
         } else {
-          setError('Invalid credentials')
+          setError('Invalid username or password')
         }
       }
       catch (error) {
@@ -79,7 +79,7 @@ const {UserStore} =useStores();
           console.log(data.user._id)
           navigate('/')
         } else {
-          setError('Invalid credentials')
+          setError('Invalid username or password')
         }
       }
       catch (error) {
@@ -112,6 +112,8 @@ const {UserStore} =useStores();
             className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             onChange={(e) => setPassword(e.target.value)}
           />
+          {/* Error Message */}
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           {/* Submit Button */}
           <button className="w-full bg-[#3B82F6] text-white font-semibold py-2 rounded-lg " onClick={handleSubmit}>
             Submit

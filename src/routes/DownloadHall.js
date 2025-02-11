@@ -247,11 +247,41 @@ const DownloadHall = () => {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `${hallTicketDetails?.hallTicketNumber}_HallTicket`,
+    pageStyle: `
+      @page {
+        size: A4;
+        margin: 0;
+      }
+      @media print {
+        html, body {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+        }
+        .print-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 1cm;
+          box-sizing: border-box;
+          width: 100%;
+          height: 100%;
+        }
+        .print-container > * {
+          width: 80%;
+          margin: 0 auto;
+          max-width: 21cm; /* Standard A4 width */
+          height: auto;
+        }
+      }
+    `,
     onAfterPrint: () => console.log('PDF Downloaded'),
   });
+  
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       {!hallTicketDetails && (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-80">
           <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">Generate Hall Ticket</h2>
@@ -281,45 +311,80 @@ const DownloadHall = () => {
         </form>
       )}
 
-      {hallTicketDetails && (
-        <div ref={printRef} className="mt-6 bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-bold mb-4 text-gray-700 text-center">Hall Ticket Details</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <p><strong>Hall Ticket:</strong> {hallTicketDetails.hallTicketNumber}</p>
-            <p><strong>Exam Center:</strong> {hallTicketDetails.examCenter}</p>
-            <p><strong>Candidate Name:</strong> {candidateDetails.name}</p>
-            <p><strong>Father's Name:</strong> {candidateDetails.fatherName}</p>
-            <p><strong>Mother's Name:</strong> {candidateDetails.motherName}</p>
-            <p><strong>Date of Birth:</strong> {candidateDetails.dob}</p>
-            <p><strong>Gender:</strong> {candidateDetails.gender}</p>
-            <p><strong>Category:</strong> {candidateDetails.category}</p>
-            <p><strong>Marital Status:</strong> {candidateDetails.maritalStatus}</p>
-            <p><strong>Mobile Number:</strong> {candidateDetails.contactInfo?.mobileNumber}</p>
-            <p><strong>Email:</strong> {candidateDetails.contactInfo?.email}</p>
-            <div className="flex items-center">
-              <p className="mr-4"><strong>Photo:</strong></p>
-              {proxiedPhotoUrl ? (
-                <img src={proxiedPhotoUrl} alt="photo" className="mt-2" width={100} height={100} />
-              ) : (
-                <p>Loading...</p>
-              )}
-            </div>
-            <div className="flex items-center">
-              <p className="mr-4"><strong>Signature:</strong></p>
-              {proxiedSignatureUrl ? (
-                <img src={proxiedSignatureUrl} alt="signature" className="mt-2" width={100} height={100} />
-              ) : (
-                <p>Loading...</p>
-              )}
-            </div>
-            <div className="flex items-center col-span-2">
-              <p className="mr-4"><strong>QR Code:</strong></p>
-              <img src={hallTicketDetails.qrCode} alt="QR Code" className="mt-2" width={100} height={100} />
-            </div>
-          </div>
-        </div>
+{hallTicketDetails && (
+       <div
+       ref={printRef}
+       className="print-container bg-white p-6 rounded-lg shadow-lg border border-gray-300 "
+     >
+       {/* Header Section */}
+       <div className="text-center border-b pb-4 mb-4">
+         <p className="text-xl font-bold">Hall Ticket</p>
+       </div>
+     
+       {/* Photo, QR, and Candidate Details */}
+       <div className="flex justify-between items-start">
+         {/* Candidate Details */}
+         <div className="space-y-2 w-2/3 text-start">
+           <p className="text-sm"><strong>Candidate Name:</strong> {candidateDetails?.name}</p>
+           <p className="text-sm"><strong>Father's Name:</strong> {candidateDetails?.fatherName}</p>
+           <p className="text-sm"><strong>Mother's Name:</strong> {candidateDetails?.motherName}</p>
+           <p className="text-sm"><strong>Date of Birth:</strong> {
+              new Date(candidateDetails?.dob).toLocaleDateString()
+           }
+           </p>
+           <p className="text-sm"><strong>Gender:</strong> {candidateDetails?.gender}</p>
+           <p className="text-sm"><strong>Category:</strong> {candidateDetails?.category}</p>
+           <p className="text-sm"><strong>Temporary Address:</strong> {candidateDetails?.temporaryAddress}</p>
+           <p className="text-sm"><strong>Permanent Address:</strong> {candidateDetails?.permanentAddress}</p>
+           <p className="text-sm"><strong>Sub-Caste:</strong> {candidateDetails?.sub_caste}</p>
+           <p className="text-sm"><strong>Marital Status:</strong> {candidateDetails?.maritalStatus}</p>
+           <p className="text-sm"><strong>Mobile Number:</strong> {candidateDetails?.contactInfo?.mobileNumber}</p>
+           <p className="text-sm"><strong>Email:</strong> {candidateDetails?.contactInfo?.email}</p>
+           <p className="text-sm"><strong>Nationality:</strong> {candidateDetails?.nationality}</p>
+           <p className="text-sm"><strong>ID Proof:</strong> {candidateDetails?.idProof} ({candidateDetails?.idProofNumber})</p>
+           <p className="text-sm"><strong>Exam Center:</strong> {hallTicketDetails?.examCenter}, {candidateDetails?.examPreferences?.state}</p>
+         </div>
+     
+         {/* Photo and QR Code */}
+         <div className="flex flex-col items-end space-y-4 w-1/3">
+           {proxiedPhotoUrl && (
+             <img
+               src={proxiedPhotoUrl}
+               alt="Candidate Photo"
+               className="w-24 h-24 border border-gray-400 rounded-sm"
+             />
+           )}
+           {hallTicketDetails.qrCode && (
+             <img
+               src={hallTicketDetails.qrCode}
+               alt="QR Code"
+               className="w-20 h-20 border border-gray-400"
+             />
+           )}
+         </div>
+       </div>
+     
+       {/* Signature Section */}
+       <div className="flex justify-between items-center mt-6">
+         <div className="text-center">
+           <p className="text-sm font-semibold">Candidate Signature</p>
+           {proxiedSignatureUrl && (
+             <img
+               src={proxiedSignatureUrl}
+               alt="Signature"
+               className="w-24 h-10 border border-gray-400 mt-2"
+             />
+           )}
+         </div>
+         <div className="text-center">
+           <p className="text-sm font-semibold">Authorized Signature</p>
+           <div className="w-24 h-10 border border-gray-400 mt-2"></div>
+         </div>
+       </div>
+     </div>
+     
+      
       )}
-
       {hallTicketDetails && (
         <button
           onClick={handlePrint}

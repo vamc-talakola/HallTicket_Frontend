@@ -34,6 +34,8 @@ const Register = () => {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [captchaValue, setCaptchaValue] = useState(null);
   const [sameAddress, setSameAddress] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [signatureUploading, setSignatureUploading] = useState(false);
 
   const handlePermanentAddressChange = (e) => {
     if (!sameAddress) {
@@ -46,23 +48,38 @@ const Register = () => {
 
   const handlePhotoChange = async (event) => {
     const file = event.target.files[0]; // Get the selected file
+
     if (file) {
-      const storageRef = ref(storage, `hall-ticket/images/${file.name}`); // Define storage path
+        const fileSizeInKB = file.size / 1024; // Convert size to KB
+        console.log("File size:", fileSizeInKB);
 
-      try {
-        // Upload the file to Firebase Storage
-        const snapshot = await uploadBytes(storageRef, file);
+        if (fileSizeInKB > 50) {
+            alert("File size must be 50KB or less!");
+            event.target.value = ""; // Reset file input
+            return;
+        }
 
-        // Get the download URL of the uploaded image
-        const url = await getDownloadURL(snapshot.ref);
-        setImageUrl(url); // Set the image URL in the state
-        setFormData((prev) => ({ ...prev, photo: url }));
-        console.log("File uploaded successfully! Image URL: ", url);
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
+        setImageUploading(true); // Set uploading state to true
+
+        const storageRef = ref(storage, `hall-ticket/images/${file.name}`); // Define storage path
+
+        try {
+            // Upload the file to Firebase Storage
+            const snapshot = await uploadBytes(storageRef, file);
+
+            // Get the download URL of the uploaded image
+            const url = await getDownloadURL(snapshot.ref);
+            setImageUploading(false); // Set uploading state to false
+            setImageUrl(url); // Set the image URL in the state
+            setFormData((prev) => ({ ...prev, photo: url }));
+            console.log("File uploaded successfully! Image URL: ", url);
+        } catch (error) {
+          setImageUploading(false); // Set uploading state to false
+            console.error("Error uploading file:", error);
+        }
     }
-  };
+};
+
   const [educationEntries, setEducationEntries] = useState([]);
 
   const addEducationEntry = () => {
@@ -106,6 +123,80 @@ const Register = () => {
       !formData.sub_caste
     )
       newErrors.subcaste = "Subcaste is required";
+
+    if (!formData.contactInfo.mobileNumber) {
+        newErrors.mobileNumber = "Mobile number is required";
+    } else if (!/^\d{10}$/.test(formData.contactInfo.mobileNumber)) {
+        newErrors.mobileNumber = "Mobile number must be exactly 10 digits";
+    }
+
+    // Aadhar number validation (only if ID Proof is Aadhar)
+    if (!formData.idProof) {
+      newErrors.idProof = "ID proof is required";
+    } else if (!formData.idProofNumber) {
+      newErrors.idProofNumber = "ID proof number is required";
+    } else {
+      switch (formData.idProof) {
+        case "Aadhar":
+          if (!/^\d{12}$/.test(formData.idProofNumber)) {
+            newErrors.idProofNumber = "Aadhar number must be exactly 12 digits";
+          } else {
+            switch (formData.idProof) {
+              case "Aadhar":
+                if (!/^\d{12}$/.test(formData.idProofNumber)) {
+                  newErrors.idProofNumber = "Aadhar number must be exactly 12 digits";
+                } else{
+                  const isSequential = (num) => {
+                    const ascending = "123456789012";
+                    const descending = "987654321098";
+                    const other = "012345678901";
+                    return (
+                      ascending.includes(num) || descending.includes(num) || other.includes(num)
+                    );
+                  };
+              
+                  // Check for all identical digits
+                  const isIdentical = /^(\d)\1{11}$/.test(formData.idProofNumber);
+              
+                  if (isSequential(formData.idProofNumber)) {
+                    newErrors.idProofNumber =
+                      "Aadhar number cannot be a continuous sequence like 123456789012 or 987654321098";
+                  } else if (isIdentical) {
+                    newErrors.idProofNumber =
+                      "Aadhar number cannot have all identical digits like 111111111111";
+                  }
+                }
+                break;
+              case "Pan":
+                if (!/^[A-Z]{5}\d{4}[A-Z]{1}$/.test(formData.idProofNumber)) {
+                  newErrors.idProofNumber = "PAN number must follow the format: 5 letters, 4 digits, and 1 letter (e.g., ABCDE1234F)";
+                }
+                break;
+              case "Voter":
+                if (!/^[A-Z]{3}\d{7}$/.test(formData.idProofNumber)) {
+                  newErrors.idProofNumber = "Voter ID must have 3 letters followed by 7 digits (e.g., ABC1234567)";
+                }
+                break;
+              default:
+                break;
+            }
+          }
+          break;
+        case "Pan":
+          if (!/^[A-Z]{5}\d{4}[A-Z]{1}$/.test(formData.idProofNumber)) {
+            newErrors.idProofNumber = "PAN number must follow the format: 5 letters, 4 digits, and 1 letter (e.g., ABCDE1234F)";
+          }
+          break;
+        case "Voter":
+          if (!/^[A-Z]{3}\d{7}$/.test(formData.idProofNumber)) {
+            newErrors.idProofNumber = "Voter ID must have 3 letters followed by 7 digits (e.g., ABC1234567)";
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
     if(!formData.disability) newErrors.disability = "Disability is required";
     if (formData.disability === "Yes" && !formData.disabilityType)
       newErrors.disabilityType = "Disability type is required";
@@ -146,19 +237,35 @@ const Register = () => {
 
   const handleSignatureChange = async (event) => {
     const file = event.target.files[0];
+
     if (file) {
-      const storageRef = ref(storage, `hall-ticket/signatures/${file.name}`);
-      try {
-        const snapshot = await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(snapshot.ref);
-        setSignatureUrl(url);
-        setFormData((prev) => ({ ...prev, signature: url }));
-        console.log("File uploaded successfully! Signature URL: ", url);
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
+        const fileSizeInKB = file.size / 1024; // Convert size to KB
+        console.log("File size:", fileSizeInKB);
+
+        if (fileSizeInKB > 30) {
+            alert("Signature file size must be 30KB or less!");
+            event.target.value = ""; // Reset file input
+            return;
+        }
+
+        setSignatureUploading(true);
+
+        const storageRef = ref(storage, `hall-ticket/signatures/${file.name}`);
+
+        try {
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+            setSignatureUploading(false);
+            setSignatureUrl(url);
+            setFormData((prev) => ({ ...prev, signature: url }));
+            console.log("File uploaded successfully! Signature URL: ", url);
+        } catch (error) {
+          setSignatureUploading(false);
+            console.error("Error uploading file:", error);
+        }
     }
-  };
+};
+
 
   const [formData, setFormData] = useState({
     name: "",
@@ -253,10 +360,32 @@ const Register = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    if (name === "mobileNumber" && !/^\d*$/.test(value)) {
+      return;
+  }
+
+  if (formData.idProof === "Aadhar" && name === "idProofNumber" && !/^\d*$/.test(value)) {
+      return;
+  }
+
+  setFormData((prev) => {
+    // Handle nested fields like contactInfo.mobileNumber
+    if (name === "mobileNumber") {
+        return {
+            ...prev,
+            contactInfo: {
+                ...prev.contactInfo,
+                mobileNumber: value, // Update only mobileNumber
+            },
+        };
+    }
+
+    return {
+        ...prev,
+        [name]: value, // Update other fields normally
+    };
+});
     // Remove error for the field immediately
     setErrors((prev) => ({
       ...prev,
@@ -438,6 +567,9 @@ const Register = () => {
       <form className="space-y-4 w-[90%] mx-auto" onSubmit={handleSubmit}>
         {/* Name */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Name
+          </label>
           <input
             type="text"
             name="name"
@@ -449,6 +581,9 @@ const Register = () => {
           {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
         </div>
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+          Confirm Name
+          </label>
           <input
             type="text"
             name="confirmName"
@@ -463,6 +598,9 @@ const Register = () => {
         </div>
         {/* Father Name */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Father's Name
+          </label>
           <input
             type="text"
             name="fatherName"
@@ -476,6 +614,9 @@ const Register = () => {
           )}
         </div>
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+          Confirm Father's Name
+          </label>
           <input
             type="text"
             name="confirmFatherName"
@@ -491,6 +632,9 @@ const Register = () => {
 
         {/* Mother Name */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+          Mother's Name
+          </label>
           <input
             type="text"
             name="motherName"
@@ -504,6 +648,9 @@ const Register = () => {
           )}
         </div>
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+          Confirm Mother's Name
+          </label>
           <input
             type="text"
             name="confirmMotherName"
@@ -519,6 +666,9 @@ const Register = () => {
 
         {/* Date of Birth */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Date Of Birth
+          </label>
           <input
             type="date"
             name="dob"
@@ -531,6 +681,9 @@ const Register = () => {
 
         {/* Gender */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Gender
+          </label>
           <select
             name="gender"
             value={formData.gender}
@@ -548,6 +701,9 @@ const Register = () => {
 
         {/* Category */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Category
+          </label>
           <select
             name="category"
             value={formData.category}
@@ -657,8 +813,64 @@ const Register = () => {
         </div>
 
         {/* ID Proof Number (Only visible if ID Proof is selected) */}
-        {formData.idProof && (
+        {formData.idProof === "Aadhar" ? (
           <div className="text-left mt-2">
+          <label className="block text-gray-700 mb-1">
+            Enter Aadhar Number
+          </label>
+          <input
+            type="text"
+            name="idProofNumber"
+            placeholder={`Enter Aadhar Number`}
+            value={formData.idProofNumber}
+            onChange={handleInputChange}
+            maxLength="12"
+            pattern="\d*"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+          />
+          {errors.idProofNumber && (
+            <p className="text-red-500 text-sm">{errors.idProofNumber}</p>
+          )}
+        </div>
+        )
+      : formData.idProof === "Pan" ? (
+        <div className="text-left mt-2">
+        <label className="block text-gray-700 mb-1">
+          Enter PAN Number
+        </label>
+        <input
+          type="text"
+          name="idProofNumber"
+          placeholder={`Enter PAN Number`}
+          value={formData.idProofNumber}
+          onChange={handleInputChange}
+          maxLength="10"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+        />
+        {errors.idProofNumber && (
+          <p className="text-red-500 text-sm">{errors.idProofNumber}</p>
+        )}
+      </div>
+      )  : formData.idProof === "Voter" ? (
+        <div className="text-left mt-2">
+        <label className="block text-gray-700 mb-1">
+          Enter Voter ID Number
+        </label>
+        <input
+          type="text"
+          name="idProofNumber"
+          placeholder={`Enter Voter ID Number`}
+          value={formData.idProofNumber}
+          onChange={handleInputChange}
+          maxLength="10"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+        />
+        {errors.idProofNumber && (
+          <p className="text-red-500 text-sm">{errors.idProofNumber}</p>
+        )}
+      </div>
+      ) : formData.idProof ? (
+        <div className="text-left mt-2">
             <label className="block text-gray-700 mb-1">
               Enter {formData.idProof} Number
             </label>
@@ -674,10 +886,13 @@ const Register = () => {
               <p className="text-red-500 text-sm">{errors.idProofNumber}</p>
             )}
           </div>
-        )}
+      )  : null}
 
         {/* Marital Status */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Marital Status
+          </label>
           <select
             name="maritalStatus"
             value={formData.maritalStatus}
@@ -764,14 +979,19 @@ const Register = () => {
         </div>
 
         <div className="text-left">
-          <input
-            type="text"
-            name="mobileNumber"
-            placeholder="Mobile Number"
-            value={formData.contactInfo.mobileNumber} // Access the nested field
-            onChange={handlePhoneNumberChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-          />
+        <label className="block text-gray-700 mb-1">
+           Mobile Number
+          </label>
+        <input
+  type="text"
+  name="mobileNumber"
+  placeholder="Mobile Number"
+  value={formData.contactInfo.mobileNumber}
+  onChange={handleInputChange}
+  maxLength="10"
+  pattern="\d*"
+  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+/>
           {errors.mobileNumber && (
             <p className="text-red-500 text-sm">{errors.mobileNumber}</p>
           )}
@@ -780,6 +1000,9 @@ const Register = () => {
         <div className="flex space-x-4 items-start">
           {/* Email Input */}
           <div className="text-left flex-1">
+          <label className="block text-gray-700 mb-1">
+           Email
+          </label>
             <input
               type="text"
               name="email"
@@ -974,45 +1197,60 @@ const Register = () => {
         </div>
 
         {/* Photo */}
-        <div className="text-left">
+        <div className="text-left flex items-start space-x-4 ">
+          <div className="text-left w-[30%]">
           <label className="block text-gray-700 mb-1">Photo</label>
           <input
             type="file"
+            accept="image/*"
             onChange={handlePhotoChange}
             className="w-full border border-gray-300 rounded-md file:px-4 file:py-2 file:bg-gray-200 file:border-none file:text-gray-700 hover:file:bg-gray-300"
           />
+          </div>
           {errors.photo && (
             <p className="text-red-500 text-sm">{errors.photo}</p>
           )}
-          {imageUrl && (
+          {imageUploading ? (
+            <p className="text-gray-700">Uploading photo...</p>
+          ) : imageUrl ? (
             <div className="text-left">
-              <h3>Uploaded Image:</h3>
-              <img src={imageUrl} alt="Uploaded" className="mt-4" />
+              <img src={imageUrl} alt="Uploaded" 
+              className="mt-4 w-[100px] h-[100px] object-cover" 
+              />
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Signature */}
-        <div className="text-left">
+        <div className="text-left flex items-start space-x-4">
+          <div className="text-left w-[30%]"> 
           <label className="block text-gray-700 mb-1">Signature</label>
           <input
             type="file"
+            accept="image/*"
             onChange={handleSignatureChange}
             className="w-full border border-gray-300 rounded-md file:px-4 file:py-2 file:bg-gray-200 file:border-none file:text-gray-700 hover:file:bg-gray-300"
           />
+          </div>
           {errors.signature && (
             <p className="text-red-500 text-sm">{errors.signature}</p>
           )}
-          {signatureUrl && (
+          {signatureUploading ? (
+            <p className="text-gray-700">Uploading signature...</p>
+          ) : signatureUrl ? (
             <div className="text-left">
-              <h3>Uploaded Image:</h3>
-              <img src={signatureUrl} alt="Uploaded" className="mt-4" />
+              <img src={signatureUrl} alt="Uploaded"
+               className="mt-4 w-[150px] h-[70px] object-cover"
+                />
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Password */}
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Password
+          </label>
           <input
             type="password"
             name="password"
@@ -1027,6 +1265,9 @@ const Register = () => {
         </div>
 
         <div className="text-left">
+        <label className="block text-gray-700 mb-1">
+           Confirm Password
+          </label>
           <input
             type="password"
             name="confirmPassword"
@@ -1040,6 +1281,7 @@ const Register = () => {
           )}
         </div>
         <div className="mt-4 flex items-start">
+        
           <input
             type="checkbox"
             id="declaration"

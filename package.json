@@ -8,6 +8,7 @@
     "cra-template": "1.2.0",
     "firebase": "^11.1.0",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
     "jspdf": "^2.5.2",
     "mobx": "^6.13.5",
     "mobx-react": "^9.2.0",

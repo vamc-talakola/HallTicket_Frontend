@@ -28,9 +28,17 @@ const handleStudentLogout=()=>{
             <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/Login', { state: { name: "controller" } })}>Controller of Examination</li>
             <li className="hover:text-blue-500 cursor-pointer" onClick={() => navigate('/Login', { state: { name: "student" } })}>Candidates</li>
           </ul>
-          <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
+          {/* if user already registered then join now should be shown */}
+          {
+            UserStore.role === "" && (
+              <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
+                Join Now →
+              </button>
+            )
+          }
+          {/* <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
             Join Now →
-          </button>
+          </button> */}
         </nav>
       )}
 
@@ -45,9 +53,9 @@ const handleStudentLogout=()=>{
             <li className="hover:text-blue-500 cursor-pointer" onClick={handleLogout}>Logout</li>
 
           </ul>
-          <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
+          {/* <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
             Join Now →
-          </button>
+          </button> */}
         </nav>
       )}
 
@@ -62,9 +70,9 @@ const handleStudentLogout=()=>{
             <li className="hover:text-blue-500 cursor-pointer" onClick={()=>navigate('/download')}>Download HallTicket</li>
             <li className="hover:text-blue-500 cursor-pointer" onClick={handleStudentLogout}>Logout</li>
           </ul>
-          <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
+          {/* <button onClick={() => navigate('/Register')} className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">
             Join Now →
-          </button>
+          </button> */}
         </nav>
       )}
 

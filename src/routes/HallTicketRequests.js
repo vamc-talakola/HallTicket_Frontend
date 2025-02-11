@@ -76,8 +76,11 @@ const HallTicketRequests = () => {
       if (response.ok) {
         console.log(`Hall ticket generated for candidate ${candidateId}`);
         alert('Hall ticket generated successfully!');
+        setModal(false);
+        fetchHallTicketRequests();
       } else {
         console.error('Failed to generate hall ticket');
+        alert('Failed to generate hall ticket');
       }
     } catch (error) {
       console.error('Error generating hall ticket:', error);
@@ -108,6 +111,8 @@ const HallTicketRequests = () => {
           <tr className="border-b">
             <th className="px-4 py-2 text-center">S.No</th>
             <th className="px-4 py-2 text-center">candidateId</th>
+            <th className="px-4 py-2 text-center">Name</th>
+            <th className="px-4 py-2 text-center">category</th>
             <th className="px-4 py-2 text-center">Status</th>
             <th className="px-4 py-2 text-center">payment Status</th>
 
@@ -115,39 +120,49 @@ const HallTicketRequests = () => {
           </tr>
         </thead>
         <tbody>
-          {hallticketrequests.map((student, index) => (
-            <tr key={student._id} className="border-b">
-              <td className="px-4 py-2 text-center">{index + 1}</td>
-              <td className="px-4 py-2 text-center">{student._id}</td>
-              <td className="px-4 py-2 text-center">{student.status}</td>
-              <td className="px-4 py-2 text-center">{student.paymentStatus ? "Paid" : "Not paid"}</td>
-              <td className="px-4 py-2 text-center">
-                {student.status === "approved" ? (
-                  <button
-                    onClick={() => handlePopup(student.candidateId)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
-                  >
-                    Generate Hall Ticket
-                  </button>
-                ) : (
-                  <> 
+          {hallticketrequests.length > 0 ? (
+            hallticketrequests.map((student, index) => (
+              <tr key={student._id} className="border-b">
+                <td className="px-4 py-2 text-center">{index + 1}</td>
+                <td className="px-4 py-2 text-center">{student._id}</td>
+                <td className="px-4 py-2 text-center">{student.candidateId.name}</td>
+                <td className="px-4 py-2 text-center">{student.candidateId.category}</td>
+                <td className="px-4 py-2 text-center">{student.status}</td>
+                <td className="px-4 py-2 text-center">{student.paymentStatus ? "Paid" : "Not paid"}</td>
+                <td className="px-4 py-2 text-center">
+                  {student.status === "approved" ? (
                     <button
-                      onClick={() => handleAppOrDec(student._id, "approved")}
-                      className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 mb-2"
+                      onClick={() => handlePopup(student.candidateId)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
                     >
-                      Approve
+                      Generate Hall Ticket
                     </button>
-                    <button
-                      onClick={() => handleAppOrDec(student._id, "rejected")}
-                      className="bg-red-500 text-white px-5 py-2 rounded-full hover:bg-red-600"
-                    >
-                      Decline
-                    </button>
-                  </>
-                )}
+                  ) : (
+                    <> 
+                      <button
+                        onClick={() => handleAppOrDec(student._id, "approved")}
+                        className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 mb-2"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleAppOrDec(student._id, "rejected")}
+                        className="bg-red-500 text-white px-5 py-2 rounded-full hover:bg-red-600"
+                      >
+                        Decline
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="text-center py-4">
+                No hallticket requests found.
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
       {modal && selectedCandidate && (
