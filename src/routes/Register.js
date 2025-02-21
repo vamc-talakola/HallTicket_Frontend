@@ -22,6 +22,7 @@ const Register = () => {
   const [cities, setCities] = useState([]);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
   const [selectedState, setSelectedState] = useState("");
+  const [selectedStateAddress, setSelectedStateAddress] = useState("");
   const [preferences, setPreferences] = useState([]);
   const [imageUrl, setImageUrl] = useState("");
   const [signatureUrl, setSignatureUrl] = useState("");
@@ -114,7 +115,14 @@ const Register = () => {
       newErrors.motherName = "Mother's name is required";
     if (formData.motherName !== formData.confirmMotherName)
       newErrors.confirmMotherName = "Mother's names do not match";
-    if (!formData.dob) newErrors.dob = "Date of birth is required";
+    if (!formData.dob) {
+      newErrors.dob = "Date of birth is required";
+  } else {
+      const dobYear = new Date(formData.dob).getFullYear();
+      if (dobYear < 2000) {
+          newErrors.dob = "Date of birth must be from the year 2000 or later";
+      }
+  }
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.category) newErrors.category = "Category is required";
     if (
@@ -124,12 +132,20 @@ const Register = () => {
     )
       newErrors.subcaste = "Subcaste is required";
 
-    if (!formData.contactInfo.mobileNumber) {
-        newErrors.mobileNumber = "Mobile number is required";
-    } else if (!/^\d{10}$/.test(formData.contactInfo.mobileNumber)) {
-        newErrors.mobileNumber = "Mobile number must be exactly 10 digits";
-    }
+    if(!formData.addressState) newErrors.addressState = "State is required";
 
+
+    if (!formData.contactInfo.email) {
+      newErrors.email = "Email is required";
+  } else if (!/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|gvpce\.ac\.in)$/.test(formData.contactInfo.email)) {
+      newErrors.email = "Enter a valid email address (eg..gmail.com, yahoo.com, or gvpce.ac.in)";
+  }
+
+  if (!formData.contactInfo.mobileNumber) {
+    newErrors.mobileNumber = "Mobile number is required";
+} else if (!/^[6-9]\d{9}$/.test(formData.contactInfo.mobileNumber)) {
+    newErrors.mobileNumber = "Mobile number must be 10 digits and start with a number greater than 5 (6, 7, 8, or 9)";
+}
     // Aadhar number validation (only if ID Proof is Aadhar)
     if (!formData.idProof) {
       newErrors.idProof = "ID proof is required";
@@ -214,7 +230,18 @@ const Register = () => {
     if (!imageUrl) newErrors.photo = "Please upload a photo";
     if (!signatureUrl) newErrors.signature = "Please upload a signature";
     if(!captchaValue) newErrors.captcha = "Please complete the captcha";
-    if(formData.password === "") newErrors.password = "Password is required";
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+  } else if (!/^[A-Z]/.test(formData.password)) {
+      newErrors.password = "Password must start with a capital letter";
+  } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one digit";
+  } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one special character";
+  } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters long";
+  }
+  
     //chck for declaration
     if (!isDeclarationChecked) newErrors.declaration = "Please accept the declaration";
     if(formData.password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
@@ -285,6 +312,7 @@ const Register = () => {
     maritalStatus: "",
     temporaryAddress: "",
     permanentAddress: "",
+    addressState:"",
     pincode: "",
     contactInfo: {
       mobileNumber: "",
@@ -487,6 +515,21 @@ const Register = () => {
     setErrors((prev) => ({
       ...prev,
       state: "",
+    }));
+  };
+
+  const handleStateForAddressChange = (e) => {
+    const stateName = e.target.value;
+    setSelectedStateAddress(stateName);
+    // fetchCities(stateName);
+    // setPreferences([]);
+    setFormData((prev) => ({
+      ...prev,
+      addressState: stateName,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      addressState: "",
     }));
   };
 
@@ -721,7 +764,7 @@ const Register = () => {
           )}
         </div>
 
-        {formData.category && formData.category !== "General" && (
+        {formData.category && formData.category !== "General" && formData.category !== "EWS"  && (
           <div className="text-left mt-2">
             <input
               type="text"
@@ -803,9 +846,9 @@ const Register = () => {
             <option value="">Select ID Proof</option>
             <option value="Aadhar">Aadhar Card</option>
             <option value="Pan">PAN Card</option>
-            <option value="Driving License">Driving License</option>
+            {/* <option value="Driving License">Driving License</option>
             <option value="Passport">Passport</option>
-            <option value="Voter">Voter ID</option>
+            <option value="Voter">Voter ID</option> */}
           </select>
           {errors.idProof && (
             <p className="text-red-500 text-sm">{errors.idProof}</p>
@@ -961,6 +1004,24 @@ const Register = () => {
           )}
         </div>
 
+        <div className="text-left">
+          <label className="block text-gray-700 mb-1">State</label>
+          <select
+            value={selectedStateAddress}
+            onChange={handleStateForAddressChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+            <option value="">Select a state</option>
+            {states.map((state) => (
+              <option key={state.name} value={state.name}>
+                {state.name}
+              </option>
+            ))}
+          </select>
+          {errors.state && (
+            <p className="text-red-500 text-sm">{errors.state}</p>
+          )}
+        </div>
+
         {/* Pincode */}
         <div className="text-left mt-4">
           <label className="block text-gray-700 mb-1">Pincode</label>
@@ -1005,7 +1066,7 @@ const Register = () => {
            Email
           </label>
             <input
-              type="text"
+              type="email"
               name="email"
               disabled={verified}
               placeholder="Email"
@@ -1139,7 +1200,7 @@ const Register = () => {
 
         {/* State */}
         <div className="text-left">
-          <label className="block text-gray-700 mb-1">State</label>
+          <label className="block text-gray-700 mb-1">Exam Center Preferred State</label>
           <select
             value={selectedState}
             onChange={handleStateChange}
@@ -1158,7 +1219,7 @@ const Register = () => {
 
         {/* City */}
         <div className="text-left">
-          <label className="block text-gray-700 mb-1">City</label>
+          <label className="block text-gray-700 mb-1">Preferred Cities</label>
           <select
             onChange={(e) => handleCityPreference(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"

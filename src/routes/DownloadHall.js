@@ -337,7 +337,7 @@ const DownloadHall = () => {
         </form>
       )}
 
-{hallTicketDetails && (
+      {hallTicketDetails && (
         <div ref={printRef} className="print-container bg-white p-6 rounded-lg shadow-lg border border-gray-300 w-full max-w-2xl">
           <div className="text-center border-b pb-4 mb-4">
             <p className="text-xl font-bold">Hall Ticket</p>
@@ -353,11 +353,12 @@ const DownloadHall = () => {
               <p className="text-sm"><strong>Venue Address:</strong> {hallTicketDetails?.examCenter} , 
                 {candidateDetails?.examPreferences?.state}
               </p>
-              <p className="text-sm"><strong>Exam Duration:</strong> {hallTicketDetails?.examDuration}</p>
+              {/* <p className="text-sm"><strong>Exam Duration:</strong> {hallTicketDetails?.examDuration}</p> */}
             </div>
             <div className="flex flex-col items-end space-y-2">
               <img src={proxiedPhotoUrl} alt="Candidate Photo" className="w-24 h-24 border rounded" />
               <img src={proxiedSignatureUrl} alt="Candidate Signature" className="w-24 h-10 border rounded" />
+              <img src={hallTicketDetails?.qrCode} alt="Candidate Signature" className="w-18 h-18 border rounded" />
             </div>
           </div>
         </div>

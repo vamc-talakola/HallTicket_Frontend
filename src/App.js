@@ -14,6 +14,7 @@ import StudentsDetails from './routes/StudentsDetails';
 import HallTicketRequests from './routes/HallTicketRequests';
 import DownloadHall from './routes/DownloadHall';
 import VerifyHallTicket from './routes/VerifyHallTicket';
+import CandidateDetails from './routes/candidateDetails';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/hallticket-requests" element={<HallTicketRequests/>} />
         <Route path="/download" element={<DownloadHall/>} />
         <Route path="/verify" element={<VerifyHallTicket/>} />
+        <Route path="/candidate-details/:id" element={<CandidateDetails />} />
       </Routes>
     </Router>
     </div>

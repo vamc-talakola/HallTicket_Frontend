@@ -10,19 +10,19 @@ const HallTicketRequests = () => {
   const [selectedCity, setSelectedCity] = useState('');
   const [examDates, setExamDates] = useState([]);
   const [examTimes, setExamTimes] = useState([]);
-  const [examDurations, setExamDurations] = useState(["2 Hours", "3 Hours"])
+  // const [examDurations, setExamDurations] = useState(["2 Hours", "3 Hours"])
 
   const [examDate, setExamDate] = useState('');
   const [examTime, setExamTime] = useState('');
-  const [examDuration, setExamDuration] = useState('');
+  // const [examDuration, setExamDuration] = useState('');
   
   const handleSubmit = () => {
     if (!selectedCity) {
       alert('Please select a city before submitting.');
       return;
     }
-    if (!examDate || !examTime || !examDuration) {
-      alert('Please select exam date, time, and duration before submitting.');
+    if (!examDate || !examTime) {
+      alert('Please select exam date, time before submitting.');
       return;
     }
     handleGenerateHallTicket(selectedCandidate._id,selectedCity)
@@ -105,7 +105,7 @@ const HallTicketRequests = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ candidateId:candidateId, examCenter:city,
-          examDate: examDate, examTime: examTime, examDuration: examDuration
+          examDate: examDate, examTime: examTime
          })
       });
       if (response.ok) {
@@ -263,7 +263,7 @@ const HallTicketRequests = () => {
           </select>
         </div>
         
-        <div>
+        {/* <div>
           <label className="block font-medium">Exam Duration</label>
           <select
             required
@@ -276,7 +276,7 @@ const HallTicketRequests = () => {
               <option key={index} value={duration}>{duration}</option>
             ))}
           </select>
-        </div>
+        </div> */}
       </div>
       
       <div className="flex justify-end mt-6 space-x-4">

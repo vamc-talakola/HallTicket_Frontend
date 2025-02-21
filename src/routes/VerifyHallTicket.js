@@ -1,42 +1,62 @@
 import { useEffect, useState, useRef } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
+import { useNavigate } from "react-router-dom";
 import BASE_URL from "../config";
 
 const VerifyHallTicket = () => {
-    const [qrResult, setQrResult] = useState("");
-    const [isScanned, setIsScanned] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [candidateDetails, setCandidateDetails] = useState({});
+    const [scanning, setScanning] = useState(false);
     const scannerRef = useRef(null);
+    const effectRan = useRef(false); // Prevent double execution in Strict Mode
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!scannerRef.current && !isScanned) {
-            scannerRef.current = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+        if (effectRan.current) return; // 🔥 Prevent second execution in Strict Mode
 
-            scannerRef.current.render(
-                async (decodedText) => {
-                    console.log("QR Code Detected:", decodedText);
-                    setQrResult(decodedText);
-                    scannerRef.current.clear(); // ✅ Stop scanning immediately
-                    await verifyQRCode(decodedText);
+        startScanning();
+        effectRan.current = true; // Mark effect as run
+
+        return () => stopScanning(); // Cleanup on unmount
+    }, []);
+
+    const startScanning = () => {
+        const qrContainer = document.getElementById("qr-reader");
+        qrContainer.innerHTML = ""; // Clear previous instances
+
+        if (scannerRef.current) return; // Prevent multiple scanner instances
+        const html5QrCode = new Html5Qrcode("qr-reader");
+
+        html5QrCode
+            .start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    stopScanning();
+                    verifyQRCode(decodedText);
                 },
-                (error) => console.error("QR Scan Error:", error)
-            );
-        }
+                (errorMessage) => {
+                    console.warn("QR Code scanning error:", errorMessage);
+                }
+            )
+            .then(() => {
+                setScanning(true);
+                scannerRef.current = html5QrCode;
+            })
+            .catch(console.error);
+    };
 
-        return () => {
-            if (scannerRef.current) {
-                // scannerRef.current.clear();
-                // scannerRef.current = null; // ✅ Ensure it gets destroyed
-            }
-        };
-    }, [isScanned]);
+    const stopScanning = () => {
+        if (scannerRef.current) {
+            scannerRef.current.stop().then(() => {
+                console.log("Scanner stopped successfully."); // Debugging
+                setScanning(false);
+                scannerRef.current = null; // Clear reference
+            }).catch(console.error);
+        }
+    };
 
     const verifyQRCode = async (qrData) => {
-        if (!qrData || isScanned) return;
-        setIsScanned(true);
         setLoading(true);
-
         try {
             const response = await fetch(`${BASE_URL}/verify-qrcode`, {
                 method: "POST",
@@ -46,92 +66,37 @@ const VerifyHallTicket = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log("API Response:", data);
-                setCandidateDetails(data);
+                navigate(`/candidate-details/${qrData}`, { state: { candidate: data } });
             } else {
                 alert("Invalid QR Code");
-                setIsScanned(false);
             }
         } catch (error) {
             console.error("Error verifying QR code:", error);
             alert("Something went wrong!");
-            setIsScanned(false);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRescan = () => {
-        console.log("Rescan initiated");
-        setQrResult("");
-        setIsScanned(false);
-        setCandidateDetails({});
-        if(scannerRef.current) {
-            scannerRef.current.clear();
-            scannerRef.current = null;
-        }
-    };
-
     return (
-        <>
-            {loading && (
-                <div className="fixed top-0 left-0 z-50 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white p-4 rounded shadow-lg text-center">
-                        <p className="text-lg font-semibold">Verifying Hall Ticket...</p>
-                        <p>Please wait...</p>
-                    </div>
-                </div>
-            )}
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                {!isScanned ? (
-                    <div className="flex flex-col items-center">
-                        <h2 className="text-xl font-semibold text-center mb-4">Scan QR Code</h2>
-                        <div id="qr-reader" className="w-96 h-96"></div>
-                    </div>
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            {loading && <p className="text-lg font-semibold">Verifying Hall Ticket...</p>}
+            <div>
+                <h2 className="text-xl font-semibold text-center mb-4">Scan QR Code</h2>
+                <div id="qr-reader" className="w-72 h-72"></div>
+
+                {scanning ? (
+                    <button onClick={stopScanning} className="bg-red-500 text-white py-2 px-4 rounded mt-2">
+                        Stop Scanning
+                    </button>
                 ) : (
-                    <div className="mt-8 p-6 bg-white rounded shadow-lg w-[50%] mx-auto h-[80vh] pl-[5%] pr-[5%]">
-                        <h3 className="text-lg font-semibold mt-4 text-center">Candidate Details</h3>
-                        <div className="grid grid-cols-2 gap-2 mt-4">
-                            <Detail label="Name" value={candidateDetails?.data?.name} />
-                            <Detail label="Father's Name" value={candidateDetails?.data?.fatherName} />
-                            <Detail label="Mother's Name" value={candidateDetails?.data?.motherName} />
-                            <Detail label="Date of Birth" value={new Date(candidateDetails?.data?.dob).toLocaleDateString()} />
-                            <Detail label="Gender" value={candidateDetails?.data?.gender} />
-                            <Detail label="Category" value={candidateDetails?.data?.category} />
-                            <Detail label="Sub-Caste" value={candidateDetails?.data?.sub_caste} />
-                            <Detail label="Marital Status" value={candidateDetails?.data?.maritalStatus} />
-                            <Detail label="Phone" value={candidateDetails?.data?.contactInfo?.mobileNumber} />
-                            <Detail label="Email" value={candidateDetails?.data?.contactInfo?.email} />
-                            <Detail label="Nationality" value={candidateDetails?.data?.nationality} />
-                            <Detail label="Address" value={candidateDetails?.data?.temporaryAddress} />
-                            <Detail label="Hall Ticket" value={qrResult} />
-                            <Detail label="ID Proof" value={`${candidateDetails?.data?.idProof} (${candidateDetails?.data?.idProofNumber})`} />
-                            <Detail label="Photo" isImage src={candidateDetails?.data?.photo} />
-                            <Detail label="Signature" isSignature src={candidateDetails?.data?.signature} />
-                        </div>
-                        <button onClick={handleRescan} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded">
-                            Rescan
-                        </button>
-                    </div>
+                    <button onClick={startScanning} className="bg-green-500 text-white py-2 px-4 rounded mt-2">
+                        Start Scanning
+                    </button>
                 )}
             </div>
-        </>
+        </div>
     );
 };
-
-// ✅ Helper Component to Render Details
-const Detail = ({ label, value, isImage, src,isSignature }) => (
-    <div className="flex space-x-4 justify-start">
-        <span className="font-medium text-gray-700">{label}:</span>
-        {isImage ? (
-            <img src={src} alt={label} className="w-20 h-20 border border-gray-400" />
-        ) : isSignature ? (
-            <img src={src} alt={label} className="w-28 h-16 border border-gray-400" />
-        ) :
-         (
-            <span className="text-gray-900">{value}</span>
-        )}
-    </div>
-);
 
 export default VerifyHallTicket;
