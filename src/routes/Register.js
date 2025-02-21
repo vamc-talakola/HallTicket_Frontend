@@ -3,7 +3,7 @@ import axios from "axios";
 import { storage, ref, uploadBytes, getDownloadURL } from "../Firebase";
 import BASE_URL from "../config";
 import { Navigate, useNavigate } from "react-router-dom";
-import ReCAPTCHA from "react-google-recaptcha";
+// import ReCAPTCHA from "react-google-recaptcha";
 
 {
   /* 
@@ -127,7 +127,7 @@ const Register = () => {
     if (!formData.category) newErrors.category = "Category is required";
     if (
       formData.category &&
-      formData.category !== "General" &&
+      formData.category !== "General" && formData.category !== "EWS" &&
       !formData.sub_caste
     )
       newErrors.subcaste = "Subcaste is required";
@@ -229,7 +229,7 @@ const Register = () => {
     //erors for photo and signature
     if (!imageUrl) newErrors.photo = "Please upload a photo";
     if (!signatureUrl) newErrors.signature = "Please upload a signature";
-    if(!captchaValue) newErrors.captcha = "Please complete the captcha";
+    // if(!captchaValue) newErrors.captcha = "Please complete the captcha";
     if (!formData.password) {
       newErrors.password = "Password is required";
   } else if (!/^[A-Z]/.test(formData.password)) {
@@ -257,7 +257,7 @@ const Register = () => {
       if (!entry.percentage)
         newErrors[`percentage_${index}`] = "Percentage is required";
     });
-
+    console.log("Validation Errors:", newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1357,20 +1357,12 @@ const Register = () => {
             any other action as per extant rules . I also declare that I have
             never been dismissed from any Government service.
           </label>
-          {errors.captcha && (
+          {/* {errors.captcha && (
             <p className="text-red-500 text-sm">{errors.declaration}</p>
-          )}
+          )} */}
         </div>
 
-        <div className="mb-4">
-          <ReCAPTCHA
-            sitekey="6LdCL9AqAAAAAM-jR5DyxHhUzdt2x4jVX1YMwbz2" // Replace with your reCAPTCHA site key
-            onChange={(value) => setCaptchaValue(value)}
-          />
-          {errors.captcha && (
-            <p className="text-red-500 text-sm">{errors.captcha}</p>
-          )}
-        </div>
+        
         <div className="text-center">
           <button
             type="submit"
@@ -1384,3 +1376,21 @@ const Register = () => {
 };
 
 export default Register;
+
+
+
+
+
+
+
+
+
+// <div className="mb-4">
+// <ReCAPTCHA
+//   sitekey="6LeQk94qAAAAAEZb7RXK66A3ntzSWOlUAqpwFsyS" 
+//   onChange={(value) => setCaptchaValue(value)}
+// />
+// {errors.captcha && (
+//   <p className="text-red-500 text-sm">{errors.captcha}</p>
+// )}
+// </div>
