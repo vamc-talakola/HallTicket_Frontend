@@ -8,14 +8,47 @@ const HallTicketRequests = () => {
   const [modal, setModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [selectedCity, setSelectedCity] = useState('');
+  const [examDates, setExamDates] = useState([]);
+  const [examTimes, setExamTimes] = useState([]);
+  const [examDurations, setExamDurations] = useState(["2 Hours", "3 Hours"])
+
+  const [examDate, setExamDate] = useState('');
+  const [examTime, setExamTime] = useState('');
+  const [examDuration, setExamDuration] = useState('');
   
   const handleSubmit = () => {
     if (!selectedCity) {
       alert('Please select a city before submitting.');
       return;
     }
+    if (!examDate || !examTime || !examDuration) {
+      alert('Please select exam date, time, and duration before submitting.');
+      return;
+    }
     handleGenerateHallTicket(selectedCandidate._id,selectedCity)
   };
+
+
+  useEffect(() => {
+    // Generate 3 random future exam dates
+    const generateDates = () => {
+      const dates = [];
+      const today = new Date();
+      for (let i = 0; i < 3; i++) {
+        const randomDays = Math.floor(Math.random() * 30) + 1; // Random within next 30 days
+        const futureDate = new Date(today);
+        futureDate.setDate(today.getDate() + randomDays);
+        dates.push(futureDate.toISOString().split("T")[0]); // Format: YYYY-MM-DD
+      }
+      return dates;
+    };
+
+    // Define 3 exam times
+    const times = ["09:00 AM", "02:00 PM", "05:00 PM"];
+
+    setExamDates(generateDates());
+    setExamTimes(times);
+  }, []);
   
   // Function to fetch hall ticket requests
   const fetchHallTicketRequests = async () => {
@@ -29,7 +62,7 @@ const HallTicketRequests = () => {
       });
       const data = await response.json();
       //filter candidates who have hallticket generated as false
-      setHallTicketRequests(data.filter((data)=>!data.candidateId.hallTicketGenerated));
+      setHallTicketRequests(data.filter((data)=> !data?.candidateId?.hallTicketGenerated));
     } catch (error) {
       console.error('Error fetching hallticket requests:', error);
     } finally {
@@ -71,7 +104,9 @@ const HallTicketRequests = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ candidateId:candidateId, examCenter:city })
+        body: JSON.stringify({ candidateId:candidateId, examCenter:city,
+          examDate: examDate, examTime: examTime, examDuration: examDuration
+         })
       });
       if (response.ok) {
         console.log(`Hall ticket generated for candidate ${candidateId}`);
@@ -124,15 +159,15 @@ const HallTicketRequests = () => {
             hallticketrequests.map((student, index) => (
               <tr key={student._id} className="border-b">
                 <td className="px-4 py-2 text-center">{index + 1}</td>
-                <td className="px-4 py-2 text-center">{student._id}</td>
-                <td className="px-4 py-2 text-center">{student.candidateId.name}</td>
-                <td className="px-4 py-2 text-center">{student.candidateId.category}</td>
-                <td className="px-4 py-2 text-center">{student.status}</td>
-                <td className="px-4 py-2 text-center">{student.paymentStatus ? "Paid" : "Not paid"}</td>
+                <td className="px-4 py-2 text-center">{student?._id}</td>
+                <td className="px-4 py-2 text-center">{student?.candidateId?.name}</td>
+                <td className="px-4 py-2 text-center">{student?.candidateId?.category}</td>
+                <td className="px-4 py-2 text-center">{student?.status}</td>
+                <td className="px-4 py-2 text-center">{student?.paymentStatus ? "Paid" : "Not paid"}</td>
                 <td className="px-4 py-2 text-center">
                   {student.status === "approved" ? (
                     <button
-                      onClick={() => handlePopup(student.candidateId)}
+                      onClick={() => handlePopup(student?.candidateId)}
                       className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
                     >
                       Generate Hall Ticket
@@ -140,13 +175,13 @@ const HallTicketRequests = () => {
                   ) : (
                     <> 
                       <button
-                        onClick={() => handleAppOrDec(student._id, "approved")}
+                        onClick={() => handleAppOrDec(student?._id, "approved")}
                         className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 mb-2"
                       >
                         Approve
                       </button>
                       <button
-                        onClick={() => handleAppOrDec(student._id, "rejected")}
+                        onClick={() => handleAppOrDec(student?._id, "rejected")}
                         className="bg-red-500 text-white px-5 py-2 rounded-full hover:bg-red-600"
                       >
                         Decline
@@ -166,48 +201,101 @@ const HallTicketRequests = () => {
         </tbody>
       </table>
       {modal && selectedCandidate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg w-[40%]">
-            <h2 className="text-xl font-bold mb-4">Candidate Details</h2>
-            <p><strong>Name:</strong> {selectedCandidate.name}</p>
-            <p><strong>Father's Name:</strong> {selectedCandidate.fatherName}</p>
-            <p><strong>Mother's Name:</strong> {selectedCandidate.motherName}</p>
-            <p><strong>DOB:</strong> {new Date(selectedCandidate.dob).toLocaleDateString()}</p>
-            <p><strong>Exam Preferences:</strong></p>
-            <ul className="list-none ml-6">
-        {selectedCandidate.examPreferences?.cities.map((city, index) => (
-          <li key={index} className="mb-2">
-            <label>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Candidate Details</h2>
+      
+      <div className="space-y-2 text-gray-700">
+        <p><strong>Name:</strong> {selectedCandidate?.name}</p>
+        <p><strong>Father's Name:</strong> {selectedCandidate?.fatherName}</p>
+        <p><strong>Mother's Name:</strong> {selectedCandidate?.motherName}</p>
+        <p><strong>DOB:</strong> {new Date(selectedCandidate?.dob).toLocaleDateString()}</p>
+      </div>
+      
+      <div className="mt-4">
+        <p className="font-medium">Exam Preferences:</p>
+        <ul className="list-none ml-4 space-y-2">
+          {selectedCandidate?.examPreferences?.cities.map((city, index) => (
+            <li key={index} className="flex items-center">
               <input
                 type="radio"
                 name="examCity"
+                required
                 value={city}
                 checked={selectedCity === city}
                 onChange={() => setSelectedCity(city)}
                 className="mr-2"
               />
               {city}
-            </label>
-          </li>
-        ))}
-      </ul>
-            <div className="flex justify-end mt-6">
-              <button
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 mr-4"
-                onClick={handleSubmit}
-              >
-                Generate Hall Ticket
-              </button>
-              <button
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                onClick={() => setModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      
+      <div className="mt-4 space-y-4">
+        <div>
+          <label className="block font-medium">Exam Date</label>
+          <select
+            value={examDate}
+            required
+            onChange={(e) => setExamDate(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300"
+          >
+            <option value="">Select Exam Date</option>
+            {examDates.map((date, index) => (
+              <option key={index} value={date}>{date}</option>
+            ))}
+          </select>
         </div>
-      )}
+        
+        <div>
+          <label className="block font-medium">Exam Time</label>
+          <select
+            required
+            value={examTime}
+            onChange={(e) => setExamTime(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300"
+          >
+            <option value="">Select Exam Time</option>
+            {examTimes.map((time, index) => (
+              <option key={index} value={time}>{time}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div>
+          <label className="block font-medium">Exam Duration</label>
+          <select
+            required
+            value={examDuration}
+            onChange={(e) => setExamDuration(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300"
+          >
+            <option value="">Select Exam Duration</option>
+            {examDurations.map((duration, index) => (
+              <option key={index} value={duration}>{duration}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <div className="flex justify-end mt-6 space-x-4">
+        <button
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+          onClick={handleSubmit}
+        >
+          Generate Hall Ticket
+        </button>
+        <button
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+          onClick={() => setModal(false)}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+) }
     </div>
   );
 };

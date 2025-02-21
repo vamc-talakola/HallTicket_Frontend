@@ -200,6 +200,23 @@ const DownloadHall = () => {
   const printRef = useRef();
   const [proxiedPhotoUrl, setProxiedPhotoUrl] = useState('');
   const [proxiedSignatureUrl, setProxiedSignatureUrl] = useState('');
+  const candidateId = localStorage.getItem("id");
+  const [yourHallTicket, setYourHallTicket] = useState("");
+
+  useEffect(()=>{
+    const fetchHallTicketNumber = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/hallticket-number/${candidateId}`);
+        const data = response.data;
+        const hallTicketNumber = data.hallTicket.hallTicketNumber;
+        setYourHallTicket(hallTicketNumber);
+      }
+      catch (error) {
+        console.error('Error fetching hall ticket number:', error);
+      }
+    }
+    fetchHallTicketNumber();
+  },[]);
 
   useEffect(() => {
     const savedHallTicketDetails = localStorage.getItem('hallTicketDetails');
@@ -228,6 +245,10 @@ const DownloadHall = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(hallTicketNumber !== yourHallTicket){
+      alert("Please enter your hall ticket number");
+      return;
+    }
     try {
       const response = await axios.get(`${BASE_URL}/hallticket/${hallTicketNumber}`);
       const hallTicketData = response.data.hallTicket;
@@ -282,9 +303,14 @@ const DownloadHall = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      
+      
       {!hallTicketDetails && (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-80">
-          <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">Generate Hall Ticket</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">Download Hall Ticket</h2>
+          {yourHallTicket && 
+          <p className="text-center text-2xl font-bold text-blue-500">{yourHallTicket}</p>
+      }
           <div className="mb-4">
             <label htmlFor="hallTicketNumber" className="block text-sm font-medium text-gray-600">
               Hall Ticket Number:
@@ -312,78 +338,29 @@ const DownloadHall = () => {
       )}
 
 {hallTicketDetails && (
-       <div
-       ref={printRef}
-       className="print-container bg-white p-6 rounded-lg shadow-lg border border-gray-300 "
-     >
-       {/* Header Section */}
-       <div className="text-center border-b pb-4 mb-4">
-         <p className="text-xl font-bold">Hall Ticket</p>
-       </div>
-     
-       {/* Photo, QR, and Candidate Details */}
-       <div className="flex justify-between items-start">
-         {/* Candidate Details */}
-         <div className="space-y-2 w-2/3 text-start">
-           <p className="text-sm"><strong>Candidate Name:</strong> {candidateDetails?.name}</p>
-           <p className="text-sm"><strong>Father's Name:</strong> {candidateDetails?.fatherName}</p>
-           <p className="text-sm"><strong>Mother's Name:</strong> {candidateDetails?.motherName}</p>
-           <p className="text-sm"><strong>Date of Birth:</strong> {
-              new Date(candidateDetails?.dob).toLocaleDateString()
-           }
-           </p>
-           <p className="text-sm"><strong>Gender:</strong> {candidateDetails?.gender}</p>
-           <p className="text-sm"><strong>Category:</strong> {candidateDetails?.category}</p>
-           <p className="text-sm"><strong>Temporary Address:</strong> {candidateDetails?.temporaryAddress}</p>
-           <p className="text-sm"><strong>Permanent Address:</strong> {candidateDetails?.permanentAddress}</p>
-           <p className="text-sm"><strong>Sub-Caste:</strong> {candidateDetails?.sub_caste}</p>
-           <p className="text-sm"><strong>Marital Status:</strong> {candidateDetails?.maritalStatus}</p>
-           <p className="text-sm"><strong>Mobile Number:</strong> {candidateDetails?.contactInfo?.mobileNumber}</p>
-           <p className="text-sm"><strong>Email:</strong> {candidateDetails?.contactInfo?.email}</p>
-           <p className="text-sm"><strong>Nationality:</strong> {candidateDetails?.nationality}</p>
-           <p className="text-sm"><strong>ID Proof:</strong> {candidateDetails?.idProof} ({candidateDetails?.idProofNumber})</p>
-           <p className="text-sm"><strong>Exam Center:</strong> {hallTicketDetails?.examCenter}, {candidateDetails?.examPreferences?.state}</p>
-         </div>
-     
-         {/* Photo and QR Code */}
-         <div className="flex flex-col items-end space-y-4 w-1/3">
-           {proxiedPhotoUrl && (
-             <img
-               src={proxiedPhotoUrl}
-               alt="Candidate Photo"
-               className="w-24 h-24 border border-gray-400 rounded-sm"
-             />
-           )}
-           {hallTicketDetails.qrCode && (
-             <img
-               src={hallTicketDetails.qrCode}
-               alt="QR Code"
-               className="w-20 h-20 border border-gray-400"
-             />
-           )}
-         </div>
-       </div>
-     
-       {/* Signature Section */}
-       <div className="flex justify-between items-center mt-6">
-         <div className="text-center">
-           <p className="text-sm font-semibold">Candidate Signature</p>
-           {proxiedSignatureUrl && (
-             <img
-               src={proxiedSignatureUrl}
-               alt="Signature"
-               className="w-24 h-10 border border-gray-400 mt-2"
-             />
-           )}
-         </div>
-         <div className="text-center">
-           <p className="text-sm font-semibold">Authorized Signature</p>
-           <div className="w-24 h-10 border border-gray-400 mt-2"></div>
-         </div>
-       </div>
-     </div>
-     
-      
+        <div ref={printRef} className="print-container bg-white p-6 rounded-lg shadow-lg border border-gray-300 w-full max-w-2xl">
+          <div className="text-center border-b pb-4 mb-4">
+            <p className="text-xl font-bold">Hall Ticket</p>
+          </div>
+          <div className="flex justify-between items-start">
+            <div className="space-y-2 w-2/3 text-start">
+            <p className="text-sm"><strong>Hall Ticket Number:</strong> {hallTicketDetails?.hallTicketNumber}</p>
+              <p className="text-sm"><strong>Candidate Name:</strong> {candidateDetails?.name}</p>
+              <p className="text-sm"><strong>Date of Birth (Password):</strong> {new Date(candidateDetails?.dob).toLocaleDateString()}</p>
+              
+              <p className="text-sm"><strong>Exam Date:</strong> {new Date(hallTicketDetails?.examDate).toLocaleDateString()}</p>
+              <p className="text-sm"><strong>Exam Time:</strong> {hallTicketDetails?.examTime}</p>
+              <p className="text-sm"><strong>Venue Address:</strong> {hallTicketDetails?.examCenter} , 
+                {candidateDetails?.examPreferences?.state}
+              </p>
+              <p className="text-sm"><strong>Exam Duration:</strong> {hallTicketDetails?.examDuration}</p>
+            </div>
+            <div className="flex flex-col items-end space-y-2">
+              <img src={proxiedPhotoUrl} alt="Candidate Photo" className="w-24 h-24 border rounded" />
+              <img src={proxiedSignatureUrl} alt="Candidate Signature" className="w-24 h-10 border rounded" />
+            </div>
+          </div>
+        </div>
       )}
       {hallTicketDetails && (
         <button
