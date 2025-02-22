@@ -1306,7 +1306,6 @@ const Register = () => {
           ) : null}
         </div>
 
-        {/* Password */}
         <div className="text-left">
         <label className="block text-gray-700 mb-1">
            Password

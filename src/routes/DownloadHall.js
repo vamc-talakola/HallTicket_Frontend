@@ -188,6 +188,7 @@
 // };
 
 // export default DownloadHall;
+
 import React, { useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import BASE_URL from '../config';
@@ -235,9 +236,15 @@ const DownloadHall = () => {
 
     try {
       const response = await fetch(`${BASE_URL}/proxy?url=${encodeURIComponent(url)}`);
-      const data = await response.json();
-      const proxiedImageUrl = `${BASE_URL}${data.url}`;
-      setImageUrl(proxiedImageUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch image");
+      }
+  
+      const blob = await response.blob();
+      const imageSrc = URL.createObjectURL(blob);
+      console.log(imageSrc);
+
+      setImageUrl(imageSrc);
     } catch (error) {
       console.error('Error fetching proxied image:', error);
     }
@@ -300,7 +307,6 @@ const DownloadHall = () => {
     onAfterPrint: () => console.log('PDF Downloaded'),
   });
   
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       
