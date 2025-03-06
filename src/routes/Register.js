@@ -31,8 +31,8 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const [verified, setVerified] = useState(false);
-  // const [otp, seOtp] = useState("");
-  // const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otp, seOtp] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
   const [captchaValue, setCaptchaValue] = useState(null);
   const [sameAddress, setSameAddress] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -482,7 +482,7 @@ const Register = () => {
         // Handle non-200 HTTP status codes
         const errorData = await response.json();
         setVerified(false)
-        // seOtp("")
+        seOtp("")
         alert(`Registration failed: ${errorData.error || "Unknown error"}`);
         
       }
@@ -571,43 +571,43 @@ const Register = () => {
     }));
   };
 
-  // const sendotp = async () => {
-  //   try {
-  //     const response = await axios.post(`${BASE_URL}/send-otp`, {
-  //       email: formData.contactInfo.email,
-  //     });
-  //     if (response.status === 200) {
-  //       console.log("OTP sent successfully");
-  //       setIsOtpSent(true);
-  //       alert("OTP sent successfully");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error sending otp:", error);
-  //   }
-  // };
-  // const verifyotp = async () => {
-  //   try {
-  //     const response = await axios.post(`${BASE_URL}/verify-otp`, {
-  //       email: formData.contactInfo.email,
-  //       otp: otp,
-  //     });
-  //     if (response.status === 200) {
-  //       console.log("OTP verified successfully");
-  //       setIsOtpSent(true);
-  //       setVerified(true);
-  //       alert("OTP verified successfully");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error sending otp:", error);
-  //   }
-  // };
+  const sendotp = async () => {
+    try {
+      const response = await axios.post(`${BASE_URL}/send-otp`, {
+        email: formData.contactInfo.email,
+      });
+      if (response.status === 200) {
+        console.log("OTP sent successfully");
+        setIsOtpSent(true);
+        alert("OTP sent successfully");
+      }
+    } catch (error) {
+      console.error("Error sending otp:", error);
+    }
+  };
+  const verifyotp = async () => {
+    try {
+      const response = await axios.post(`${BASE_URL}/verify-otp`, {
+        email: formData.contactInfo.email,
+        otp: otp,
+      });
+      if (response.status === 200) {
+        console.log("OTP verified successfully");
+        setIsOtpSent(true);
+        setVerified(true);
+        alert("OTP verified successfully");
+      }
+    } catch (error) {
+      console.error("Error sending otp:", error);
+    }
+  };
   return (
     <div className=" mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">
         Registration Form
       </h2>
 
-      <form className="space-y-4 w-[90%] mx-auto" onSubmit={handleSubmit}>
+      <form className="space-y-4 w-[33%] mx-auto" onSubmit={handleSubmit}>
         {/* Name */}
         <div className="text-left">
         <label className="block text-gray-700 mb-1">
@@ -1080,7 +1080,10 @@ const Register = () => {
           </div>
 
           {/* OTP Input */}
-          {/* <div className="text-left flex-1">
+          <div className="text-left flex-1">
+          <label className="block text-gray-700 mb-1">
+           Enter OTP
+          </label>
             <input
               type="text"
               name="otp"
@@ -1090,9 +1093,9 @@ const Register = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
             />
             {errors.otp && <p className="text-red-500 text-sm">{errors.otp}</p>}
-          </div> */}
+          </div>
         </div>
-        {/* <div className="flex space-x-4 items-start">
+        <div className="flex space-x-4 items-start">
           <div className="text-left flex-1">
             <button
               type="button"
@@ -1112,7 +1115,7 @@ const Register = () => {
               verify otp
             </button>
           </div>
-        </div> */}
+        </div>
 
         <div>
           <h3 className="text-xl font-semibold mb-4">Education Information</h3>
@@ -1258,7 +1261,7 @@ const Register = () => {
 
         {/* Photo */}
         <div className="text-left flex items-start space-x-4 ">
-          <div className="text-left w-[30%]">
+          <div className="text-left w-[70%]">
           <label className="block text-gray-700 mb-1">Photo</label>
           <input
             type="file"
@@ -1283,7 +1286,7 @@ const Register = () => {
 
         {/* Signature */}
         <div className="text-left flex items-start space-x-4">
-          <div className="text-left w-[30%]"> 
+          <div className="text-left w-[70%]"> 
           <label className="block text-gray-700 mb-1">Signature</label>
           <input
             type="file"

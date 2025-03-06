@@ -3,8 +3,27 @@ import BASE_URL from '../config'
 
 const StudentApprovals = () => {
     const [approvalStudents, setApprovalStudents] = useState([])
-    const handleappordec = async (id,status) => {
+    const handleappordec = async (id,status,category,dob) => {
+      const age = getAge(dob); // Calculate age
+      const categoryLimits = {
+        "General": { min: 18, max: 33 },
+        "EWS": { min: 18, max: 33 },
+        "OBC": { min: 18, max: 36 },
+        "SC": { min: 18, max: 38 },
+        "ST": { min: 18, max: 38 },
+      };
 
+      if (status === "approved") {
+        const limits = categoryLimits[category];
+    
+        if (!limits || age < limits.min || age > limits.max) {
+          const confirmApproval = window.confirm(
+            `The candidate's age is ${age}, which is out of the range (${limits.min} to ${limits.max}). Do you still want to approve?`
+          );
+          if (!confirmApproval) return;
+        }
+      }
+      
       try{
         const response=await fetch(`${BASE_URL}/candidate/${id}/status`,{
           method:'PUT',
@@ -61,6 +80,23 @@ const StudentApprovals = () => {
 
       console.log(approvalStudents)
 
+      const getAge = (dob) => {
+        const birthDate = new Date(dob);
+        const today = new Date();
+      
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const dayDiff = today.getDate() - birthDate.getDate();
+      
+        // Adjust age if the birthday hasn't occurred yet this year
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+          age--;
+        }
+      
+        return age;
+      };
+      
+
   return (
     <div className="container mx-auto my-8 shadow-2xl w-[80%] rounded-lg py-8">
       <h1 className="text-3xl font-bold text-center mb-6">Approval Students List</h1>
@@ -84,14 +120,17 @@ const StudentApprovals = () => {
               <td className="px-4 py-2 text-center">{student.category}</td>
               <td className="px-4 py-2 text-center">{student.contactInfo.mobileNumber}</td>
               <td className="px-4 py-2 text-center">{student.contactInfo.email}</td>
-              <td className="px-4 py-2 text-center">{new Date(student.dob).toLocaleDateString()}</td>
+              <td className="px-4 py-2 text-center">
+  {new Date(student.dob).toLocaleDateString()} ({getAge(student.dob)} years)
+</td>
+
               <td className="px-4 py-2 text-center">{student.fatherName}</td>
               <td className="px-4 py-2 text-center">{student.motherName}</td>
               <td className="px-4 py-2 text-center">
                 <button
                 //   onClick={() => handleApprove(student._id)}
                   className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600  mb-5"
-                  onClick={()=>handleappordec(student._id,"approved")}
+                  onClick={()=>handleappordec(student._id,"approved",student.category,student.dob)}
                 >
                   Approve
                 </button>
